@@ -228,6 +228,14 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .wcard.show{border-color:var(--accent)}
 .wcard.show b,.wcard.show small{visibility:visible}
 .note .ar{font-size:1.35rem}
+.subopt{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.subopt .lbl{margin:0}
+.seg.tall button{line-height:1.3;padding:8px 4px}
+.demo{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:10px;padding:6px 12px;min-height:58px}
+.demo .dq{font-size:1.5rem;font-weight:700;color:var(--accent);min-width:44px;text-align:center}
+.demo .dq.ar{font-size:2.2rem;line-height:1.5}
+.demo .da{font-size:.88rem;color:var(--muted)}
+.demo .da .ar{font-size:1.3rem;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pop{animation:pop .25s ease}
@@ -850,9 +858,16 @@ function ezPick(box){
    </div>
    <div class="pick">${order.map(c=>`<button data-c="${c}" class="${ezSel.has(c)?"sel":""}"><span class="ar">${c}</span><small>${byChar[c][1]}</small></button>`).join("")}</div>
    <div><p class="lbl">Kaç kez arka arkaya doğru bilinsin?</p><div class="seg s3">${[2,3,5].map(t=>`<button data-tg="${t}" class="${t===ezTarget?"sel":""}">${t} kez</button>`).join("")}</div></div>
-   <div><p class="lbl">Soru türü</p><div class="seg s3">${[["isim","Harf → adı"],["harf","Adı → harf"],["mix","Karışık"]].map(([k,t])=>`<button data-ty="${k}" class="${k===ezType?"sel":""}">${t}</button>`).join("")}</div></div>
-   <div><p class="lbl">Cevap şekli</p><div class="seg">${[["sec","Seçerek"],["yaz","Yazarak"]].map(([k,t])=>`<button data-an="${k}" class="${k===ezAns?"sel":""}">${t}</button>`).join("")}</div>
-     <p class="hint2">${ezAns==="yaz"?"Harfi görünce <b>adını klavyeyle yazarsın</b>. Adı görünce harfi seçeneksiz, <b>Arapça klavyeden</b> bulursun. Daha zor ama ezberi daha iyi oturtur.":"Her soruda 4 seçenek çıkar, doğrusuna dokunursun."}</p></div>
+   <div><p class="lbl">Cevap şekli</p><div class="seg">${[["sec","Seçerek"],["yaz","Yazarak"]].map(([k,t])=>`<button data-an="${k}" class="${k===ezAns?"sel":""}">${t}</button>`).join("")}</div></div>
+   <div class="subopt"><p class="lbl">${ezAns==="yaz"?"Yazarak nasıl sorulsun?":"Seçerek nasıl sorulsun?"}</p>
+     <div class="seg s3 tall">${(ezAns==="yaz"?[["isim","Harfi gör,<br>adını yaz"],["harf","Adını gör,<br>harfi bul"],["mix","Karışık"]]:[["isim","Harfi gör,<br>adını seç"],["harf","Adını gör,<br>harfi seç"],["mix","Karışık"]]).map(([k,t])=>`<button data-ty="${k}" class="${k===ezType?"sel":""}">${t}</button>`).join("")}</div>
+     <div class="demo">${ezAns==="yaz"
+       ?(ezType==="harf"?`<span class="dq">Be</span><span class="da">29 harflik Arapça klavyeden <span class="ar">ب</span> harfini bulursun</span>`
+        :ezType==="isim"?`<span class="dq ar">ب</span><span class="da">Klavyeyle <b>“Be”</b> yazarsın</span>`
+        :`<span class="da">Bazen harfi görüp adını yazarsın, bazen adını görüp harfi klavyeden bulursun</span>`)
+       :(ezType==="harf"?`<span class="dq">Be</span><span class="da">4 harf arasından <span class="ar">ب</span> harfine dokunursun</span>`
+        :ezType==="isim"?`<span class="dq ar">ب</span><span class="da">4 isim arasından <b>Be</b>'ye dokunursun</span>`
+        :`<span class="da">İki soru türü karışık gelir</span>`)}</div></div>
    <button class="btn pri" id="ezStart" ${n<2?"disabled":""}>${n<2?"En az 2 harf seç":`Başla · ${n} harf`}</button>`;
   const re=()=>{saveEz();ezPick(box)};
   box.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{const c=b.dataset.c;ezSel.has(c)?ezSel.delete(c):ezSel.add(c);re()});
@@ -894,6 +909,7 @@ function ezBuildShell(box){
      <div class="typein" id="ezType" hidden><input id="ezIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Harfin adını yaz"><button class="btn pri" id="ezCheck" type="button">Kontrol</button></div>
      <div class="kb" id="ezKb" hidden>${L.map(x=>`<button data-v="${x[0]}">${x[0]}</button>`).join("")}</div>
      <div class="fb" aria-live="polite"></div>
+     <button class="btn pri" id="ezNext" type="button" hidden style="width:100%">Devam et ›</button>
    </div>`;
   const inp=box.querySelector("#ezIn");
   const keepFocus=el=>{["pointerdown","mousedown"].forEach(t=>el.addEventListener(t,ev=>{if(!box.querySelector("#ezType").hidden)ev.preventDefault()}))};
@@ -906,6 +922,7 @@ function ezBuildShell(box){
     const r=nameMatch(t,ezCur.c);ezJudge(box,r.letter,t,null,r.typo);
   }
   box.querySelector("#ezBack").onclick=()=>{ezLeave();ezView="pick";renderEzber(box)};
+  box.querySelector("#ezNext").onclick=nextNow;
   box.querySelector("#ezCheck").onclick=()=>{submit();inp.focus()};
   inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.keyCode===13){ev.preventDefault();submit()}});
   inp.addEventListener("beforeinput",ev=>{if(ezCur&&ezCur.answered)ev.preventDefault()});
@@ -950,6 +967,8 @@ function ezRun(box){
   const T=box.querySelector("#ezType"),inp=box.querySelector("#ezIn");T.hidden=mode!=="type";
   inp.value="";inp.className="";
   box.querySelector("#ezCheck").disabled=false;
+  box.querySelector("#ezCheck").textContent="Kontrol";
+  box.querySelector("#ezNext").hidden=true;
   box.querySelector("#ezSkip").hidden=!yaz;
   box.querySelector("#ezCard").classList.toggle("yaz",yaz);
   box.querySelector(".fb").innerHTML="";
@@ -971,7 +990,7 @@ function ezJudge(box,o,typed,btn,typo){
   if(btn&&!ok)btn.classList.add("no");
   if(Z.mode==="type")box.querySelector("#ezIn").className=ok?"ok":"no";
   e.asked++;
-  const fb=box.querySelector(".fb"),hint=Z.mode==="type"?" · Devam için Enter":"";
+  const fb=box.querySelector(".fb"),hint=Z.mode==="type"?"<br>Okuyunca <b>Devam</b>'a ya da Enter'a bas.":"";
   if(ok){e.right++;e.st[c]=(e.st[c]||0)+1;buzz(25);const s=e.st[c];fb.style.color="var(--good)";
     const extra=typo?` · Doğru yazılışı: <b>${byChar[c][1]}</b>`:"";
     fb.innerHTML=s>=e.target?`✓ Doğru! ${byChar[c][1]} ezberlendi.<small>${c} artık sorulmayacak.${extra}</small>`:`✓ Doğru!<small>${c} = ${byChar[c][1]} · ${s} / ${e.target}${extra}</small>`}
@@ -980,7 +999,11 @@ function ezJudge(box,o,typed,btn,typo){
     fb.innerHTML=`${o||typed?"✗ Yanlış.":"Cevap:"} ${byChar[c][1]} <span class="ar" style="font-size:1.6rem">${c}</span><small>${what}${FARK[c]}<br>Sayaç sıfırlandı, bu harf yine gelecek.${hint}</small>`}
   saveEz();
   ezUpdateHead(box,e);
-  ezTimer=setTimeout(()=>{if(learnView==="ezber"&&ezView==="run"&&ez===e)ezRun(box)},ok?(typo?1800:900):2600);
+  if(ok){ezTimer=setTimeout(()=>{if(learnView==="ezber"&&ezView==="run"&&ez===e)ezRun(box)},typo?1800:900);return}
+  // yanlışta otomatik geçme: açıklamayı okuyup "Devam"a basana kadar bekle
+  box.querySelector("#ezSkip").hidden=true;
+  if(Z.mode==="type")box.querySelector("#ezCheck").textContent="Devam ›";
+  else{const nb=box.querySelector("#ezNext");nb.hidden=false;try{nb.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}}
 }
 function ezFinish(box){
   document.getElementById("learnSeg").hidden=true;
