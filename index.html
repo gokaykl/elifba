@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Elif-Ba</title>
+<meta name="theme-color" content="#1B2A33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Elif-Ba">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<style>
+:root{
+  --bg:#F3F5F1; --surface:#FFFFFF; --ink:#1B2A33; --muted:#5D6B70;
+  --line:#DCE2DC; --accent:#B97910; --accent-soft:#F6E8CC; --good:#2E7D4F; --bad:#B4412F; --blue:#2F6690;
+  --ar:"Noto Naskh Arabic","Noto Sans Arabic","Geeza Pro","Damascus","Amiri",serif;
+  --ui:system-ui,Roboto,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11171B; --surface:#1A2328; --ink:#E7ECE8; --muted:#97A5A9;
+  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171B; --surface:#1A2328; --ink:#E7ECE8; --muted:#97A5A9;
+  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; color-scheme:dark}
+html{background:var(--line)}
+/* geniş ekranda (bilgisayar önizlemesi) telefon genişliğinde göster */
+@media (min-width:560px){body{max-width:440px;margin:0 auto!important;box-shadow:0 0 0 1px var(--line),0 10px 40px rgba(0,0,0,.12)}.sheet{justify-content:center}.panel{max-width:440px}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.5;display:flex;flex-direction:column}
+.ar{font-family:var(--ar);direction:rtl;unicode-bidi:isolate}
+header{padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:12px}
+header h1{margin:0;font-size:1.3rem;flex:1}
+header h1 .ar{color:var(--accent);margin-left:6px}
+.prog{font-size:.8rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;min-width:110px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+main{flex:1;overflow-y:auto;padding:4px 16px 24px}
+nav{padding-bottom:env(safe-area-inset-bottom,0px);display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--surface)}
+nav button{font:inherit;font-size:.82rem;font-weight:500;background:none;border:0;color:var(--muted);padding:8px 2px 12px;display:flex;flex-direction:column;align-items:center;gap:0}
+nav button .ar{font-size:1.5rem;line-height:1.5}
+nav button[aria-selected="true"]{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+section{display:flex;flex-direction:column;gap:18px}
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--muted);font-size:.92rem}
+.intro b{color:var(--ink)}
+.group{display:flex;flex-direction:column;gap:8px}
+.group h3{margin:0;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.group h3 span{text-transform:none;letter-spacing:0;color:var(--ink);font-weight:400;margin-left:6px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;direction:rtl}
+.card{direction:ltr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 2px 8px;text-align:center;position:relative;font:inherit;color:var(--ink)}
+.card .ar{font-size:2.6rem;line-height:1.5;display:block}
+.card .nm{font-size:.8rem;color:var(--muted)}
+.card.done{border-color:var(--good)}
+.card.done::after{content:"✓";position:absolute;top:3px;left:7px;color:var(--good);font-size:.8rem;font-weight:700}
+.card:active{background:var(--accent-soft)}
+/* detay penceresi */
+.sheet{position:fixed;inset:0;background:rgba(10,15,18,.5);display:flex;align-items:flex-end;z-index:20}
+.panel{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:94%;overflow:auto;padding:18px 16px 22px;display:flex;flex-direction:column;gap:16px}
+.ptop{display:flex;gap:14px;align-items:center}
+.big{font-size:5rem;line-height:1.35;color:var(--accent);min-width:96px;text-align:center}
+.ptop h2{margin:0;font-size:1.6rem}
+.ptop p{margin:2px 0;color:var(--muted)}
+.lbl{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
+.forms{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;direction:rtl}
+.forms div{direction:ltr;border:1px solid var(--line);border-radius:10px;text-align:center;padding:2px}
+.forms .ar{font-size:2.1rem;display:block;line-height:1.7}
+.forms small{color:var(--muted);font-size:.72rem}
+.note{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.rules{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+/* hareke tablosu */
+.htab{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hrow{display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;padding:6px 12px;border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.hrow .ar{font-size:2.3rem;line-height:1.75;text-align:center;color:var(--ink)}
+.hrow .hn{font-weight:600;font-size:.95rem}
+.hrow .hd{color:var(--muted);font-size:.8rem;line-height:1.35}
+.hrow .rd{font-weight:700;font-size:1.15rem;color:var(--accent);text-align:right;min-width:56px}
+.hsep{background:var(--bg);padding:5px 12px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);font-weight:500}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns .wide{grid-column:span 2}
+.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px 14px}
+.btn:disabled{opacity:.4}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+.btn.on{background:var(--good);border-color:var(--good);color:var(--bg);font-weight:600}
+/* hareke sekmesi */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips button{flex:0 0 auto;font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 14px 4px 10px;display:flex;align-items:center;gap:6px}
+.chips button .ar{font-size:1.7rem;line-height:1.6;color:var(--accent)}
+.chips button.sel{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chips button.sel .ar{color:var(--bg)}
+.explain{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.explain h3{margin:0;font-size:1.1rem}
+.explain p{margin:0}
+.syl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;direction:rtl}
+.syl button{direction:ltr;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:2px 2px 6px;text-align:center}
+.syl .ar{font-size:2.2rem;display:block;line-height:1.8}
+.syl small{display:block;font-weight:600;min-height:1.4em;color:var(--accent)}
+.syl.hide small{visibility:hidden}
+.syl.hide button.show small{visibility:visible}
+/* kurallar */
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rule h3{margin:0;font-size:1.05rem;display:flex;align-items:baseline;gap:8px}
+.rule h3 .num{color:var(--accent);font-variant-numeric:tabular-nums;font-size:.9rem}
+.rule h3 .ar{font-size:1.7rem;margin-left:auto;color:var(--accent);font-weight:400}
+.rule p{margin:0;font-size:.93rem}
+.ex{display:flex;flex-wrap:wrap;gap:6px;direction:rtl}
+.ex div{direction:ltr;border:1px solid var(--line);border-radius:10px;padding:0 10px 4px;text-align:center;min-width:72px}
+.ex .ar{font-size:1.9rem;line-height:1.9;display:block}
+.ex small{font-weight:600;color:var(--accent)}
+/* test */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.seg button{font:inherit;font-size:.88rem;border:0;background:none;color:var(--muted);border-radius:9px;padding:9px 4px}
+.seg button.sel{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.qstat{display:flex;justify-content:space-between;width:100%;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.qask{margin:0;font-size:1.15rem;font-weight:600}
+.qglyph{font-size:6.5rem;line-height:1.6;color:var(--accent)}
+.qname{font-size:2.4rem;font-weight:700;color:var(--accent);padding:18px 0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opts button{font:inherit;font-size:1.2rem;padding:14px 8px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);min-height:64px}
+.opts.glyphs button{font-family:var(--ar);font-size:2.6rem;line-height:1.5;padding:0 8px}
+.opts button.ok{background:var(--good);border-color:var(--good);color:var(--bg)}
+.opts button.no{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.fb{min-height:3.2em;font-weight:600;font-size:1.1rem;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fb small{font-weight:400;font-size:.88rem;color:var(--muted)}
+.score{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.stars{font-size:1.8rem;letter-spacing:4px;color:var(--accent)}
+/* öğren */
+.path{display:flex;flex-direction:column;gap:8px}
+.lesson{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;text-align:left}
+.lesson .ln{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--bg);color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.lesson .lt{display:flex;flex-direction:column;min-width:0}
+.lesson .lt small{color:var(--muted);font-size:.8rem}
+.lesson .lg{font-size:1.8rem;line-height:1.6;color:var(--muted)}
+.lesson.ok .ln{background:var(--good);color:var(--bg)}
+.lesson.next{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.lesson.next .ln{background:var(--accent);color:var(--bg)}
+.lesson.next .lg{color:var(--accent)}
+.ltop{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+.btn.sm{padding:6px 12px;font-size:.88rem}
+.dots{display:flex;gap:6px}
+.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.dots i.d{background:var(--good)}
+.dots i.c{background:var(--accent)}
+.meet{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.meet .head{text-align:center}
+.meet .mglyph{font-size:7rem;line-height:1.5;color:var(--accent)}
+.meet h2{margin:0;font-size:1.8rem}
+.meet .snd{margin:0;color:var(--muted)}
+.fam{display:flex;gap:8px;direction:rtl}
+.fam div{direction:ltr;flex:1;border:1px solid var(--line);border-radius:12px;padding:2px 4px 8px;text-align:center;display:flex;flex-direction:column;opacity:.7}
+.fam div.me{opacity:1;border:2px solid var(--accent);background:var(--accent-soft)}
+.fam .ar{font-size:2.4rem;line-height:1.6}
+.fam small{color:var(--muted);font-size:.74rem;line-height:1.3}
+.forms4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;direction:rtl}
+.forms4 div{direction:ltr;border:1px solid var(--line);border-radius:12px;text-align:center;padding:2px 2px 6px;background:var(--surface)}
+.forms4 .ar{font-size:2.6rem;display:block;line-height:1.7;color:var(--accent)}
+.forms4 small{color:var(--muted);font-size:.78rem;font-weight:500}
+.join{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:rtl}
+.join div{direction:ltr;border:1px dashed var(--line);border-radius:12px;text-align:center;padding:2px 2px 6px}
+.join .ar{font-size:2.3rem;display:block;line-height:1.8}
+.join small{color:var(--muted);font-size:.75rem}
+.lchips{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;direction:rtl}
+.lchips button{font:inherit;font-family:var(--ar);font-size:1.7rem;line-height:1.7;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:0}
+.lchips button.sel{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.qpos{margin:-8px 0 0;color:var(--muted);font-size:.85rem}
+.seg.s3{grid-template-columns:repeat(3,1fr)}
+.quick{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:6px}
+.quick .btn{white-space:nowrap;padding:8px 4px;font-size:.85rem}
+.pick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;direction:rtl}
+.pick button{direction:ltr;font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:0 2px 4px;display:flex;flex-direction:column;align-items:center;position:relative}
+.pick .ar{font-size:1.8rem;line-height:1.6}
+.pick small{font-size:.7rem;color:var(--muted)}
+.pick button.sel{background:var(--accent-soft);border:2px solid var(--accent)}
+.pick button.sel::after{content:"✓";position:absolute;top:2px;left:5px;font-size:.72rem;color:var(--accent);font-weight:700}
+.ezstrip{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;direction:rtl;scrollbar-width:none;padding-bottom:2px}
+.ezstrip.wrap{flex-wrap:wrap;overflow:visible}
+.ezc{flex:0 0 auto}
+.ezq .qglyph{font-size:5.2rem}
+.ezq{gap:8px}
+.ezc{direction:ltr;min-width:42px;border:1px solid var(--line);border-radius:10px;text-align:center;padding:0 4px 5px;background:var(--surface);display:flex;flex-direction:column;align-items:center}
+.ezc .ar{font-size:1.5rem;line-height:1.6}
+.pips{display:flex;gap:3px}
+.pips i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.pips i.f{background:var(--accent)}
+.ezc.m{background:var(--good);border-color:var(--good);color:var(--bg)}
+.ezc.m .pips i{background:var(--bg)}
+.hint2{margin:6px 0 0;font-size:.85rem;color:var(--muted)}
+.typein{display:flex;gap:8px;width:100%}
+.typein input{flex:1;min-width:0;font:inherit;font-size:1.2rem;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.typein input:focus{outline:none;border-color:var(--accent)}
+.typein input.ok{border-color:var(--good);background:var(--good);color:var(--bg)}
+.typein input.no{border-color:var(--bad);color:var(--bad)}
+.kb{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;direction:rtl;width:100%}
+.kb button{font-family:var(--ar);font-size:1.7rem;line-height:1.6;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:0}
+.kb button.ok{background:var(--good);border-color:var(--good);color:var(--bg)}
+.kb button.no{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.ezq.yaz .qglyph{font-size:4.6rem}
+.ezq.yaz .qname{padding:6px 0}
+.qhead{display:flex;align-items:center;gap:8px;width:100%;justify-content:center}
+.qhead .qask{flex:1}
+.qhead .btn{flex:0 0 auto}
+.ezq .fb{min-height:4.8em}
+body.typing header,body.typing nav,body.typing .ezbar{display:none}
+body.typing main{padding-top:8px}
+body.typing .ezq{padding:10px 12px;gap:6px}
+body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pop{animation:pop .25s ease}
+</style>
+</head>
+<body>
+<header>
+  <h1>Elif-Ba <span class="ar">ا ب ت</span></h1>
+  <div class="prog"><span id="progTxt">0 / 29 öğrenildi</span><div class="bar"><i id="progBar" style="width:0"></i></div></div>
+</header>
+
+<main>
+  <section id="ogren">
+    <div class="seg s3" id="learnSeg">
+      <button data-lv="ders" class="sel">Dersler</button>
+      <button data-lv="yazilis">Yazılış</button>
+      <button data-lv="ezber">Ezber</button>
+    </div>
+    <div id="learnBody" style="display:flex;flex-direction:column;gap:16px"></div>
+  </section>
+
+  <section id="harf" hidden>
+    <div class="intro">Arapça <b>sağdan sola</b> okunur. Benzer harfler aynı satırda: çoğu sadece <b>noktalarıyla</b> ayrılır. Bir harfe dokun: adını, sesini ve <b>hareke gelince nasıl okunduğunu</b> gör.</div>
+    <div id="groups" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+
+  <section id="hareke" hidden>
+    <div class="intro">Harf tek başına sadece bir ünsüzdür (b, t, s…). Üstüne veya altına konan <b>hareke</b> ona sesli harfi verir. Bir hareke seç, bütün harflerde nasıl okunduğuna bak.</div>
+    <div class="chips" id="hkChips"></div>
+    <div class="explain" id="hkExplain"></div>
+    <button class="btn" id="hideBtn">Okunuşları gizle, kendimi deneyeyim</button>
+    <div class="syl" id="sylGrid"></div>
+  </section>
+
+  <section id="kural" hidden>
+    <div class="intro">Elif-Ba'nın temel okuma kuralları, sırayla. Her kuralın altında örnekler var: önce kendin oku, sonra altındaki okunuşla karşılaştır.</div>
+    <div id="rules" style="display:flex;flex-direction:column;gap:12px"></div>
+  </section>
+
+  <section id="test" hidden>
+    <div class="seg" id="modeSeg">
+      <button data-mode="harf" class="sel">Bu harf nedir?</button>
+      <button data-mode="ters">Hangisi?</button>
+      <button data-mode="hece">Harekeli oku</button>
+      <button data-mode="isaret">Bu işaret ne?</button>
+    </div>
+    <div class="seg" id="setSeg">
+      <button data-set="all" class="sel">Tüm harfler</button>
+      <button data-set="done">Öğrendiklerim</button>
+    </div>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</main>
+
+<nav role="tablist">
+  <button role="tab" data-t="ogren" aria-selected="true"><span class="ar">أ</span>Öğren</button>
+  <button role="tab" data-t="harf" aria-selected="false"><span class="ar">ا ب</span>Harfler</button>
+  <button role="tab" data-t="hareke" aria-selected="false"><span class="ar">بَ بِ</span>Harekeler</button>
+  <button role="tab" data-t="kural" aria-selected="false"><span class="ar">بّ</span>Kurallar</button>
+  <button role="tab" data-t="test" aria-selected="false"><span class="ar">؟</span>Test</button>
+</nav>
+
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+
+<script>
+const FA="َ",KE="ِ",DA="ُ",SU="ْ",SH="ّ",TF="ً",TK="ٍ",TD="ٌ",TAT="ـ";
+// [harf, ad, ses açıklaması, ünsüz, açıklama, bitişmez]
+const L=[
+ ["ا","Elif","—","","Kendi sesi yoktur. Dik bir çizgidir.",1],
+ ["ب","Be","b","b","Türkçedeki b. Kayık gibi gövde, altında 1 nokta."],
+ ["ت","Te","t","t","Türkçedeki t. Be ile aynı gövde, üstünde 2 nokta."],
+ ["ث","Se","s (peltek)","s","Peltek s: dil ucu dişlerin arasına hafifçe değer. Üstünde 3 nokta."],
+ ["ج","Cim","c","c","Türkçedeki c. Kanca gövde, altında 1 nokta."],
+ ["ح","Ha","h (sert)","h","Boğazın ortasından nefesli, sert h. Noktası yok."],
+ ["خ","Hı","h (hırıltılı)","h","Gırtlaktan hırıltılı h. Üstünde 1 nokta."],
+ ["د","Dal","d","d","Türkçedeki d. Kendinden sonraki harfe bitişmez.",1],
+ ["ذ","Zel","z (peltek)","z","Peltek z. Dal gibi ama üstünde 1 nokta.",1],
+ ["ر","Ra","r","r","Türkçedeki r. Aşağı inen kuyruk.",1],
+ ["ز","Ze","z","z","Türkçedeki z. Ra gibi ama üstünde 1 nokta.",1],
+ ["س","Sin","s","s","Türkçedeki s. Üç dişli, noktasız."],
+ ["ش","Şın","ş","ş","Türkçedeki ş. Üç dişli, üstünde 3 nokta."],
+ ["ص","Sad","s (kalın)","s","Kalın s: ağız dolu okunur. Yatık halka gövde."],
+ ["ض","Dad","d (kalın)","d","Kalın d. Sad gibi ama üstünde 1 nokta."],
+ ["ط","Tı","t (kalın)","t","Kalın t. Sancak gibi dik çubuklu, noktasız."],
+ ["ظ","Zı","z (kalın)","z","Kalın peltek z. Tı gibi ama üstünde 1 nokta."],
+ ["ع","Ayn","boğaz sesi","‘","Boğazın ortasından sıkılarak çıkan ses. Türkçede karşılığı yok. Göz gibi açık baş."],
+ ["غ","Gayn","ğ (kalın)","ğ","Gırtlaktan, gargara yapar gibi ğ. Ayn gibi ama üstünde 1 nokta."],
+ ["ف","Fe","f","f","Türkçedeki f. Yuvarlak baş, üstünde 1 nokta."],
+ ["ق","Kaf","k (kalın)","k","Dilin en arkasından kalın k. Üstünde 2 nokta, kuyruğu daha derin."],
+ ["ك","Kef","k (ince)","k","İnce k (kedi'deki gibi). İçinde küçük bir işaret var."],
+ ["ل","Lam","l","l","Türkçedeki l. Elif'e benzer ama altı kıvrık."],
+ ["م","Mim","m","m","Türkçedeki m. Küçük yuvarlak baş, aşağı kuyruk."],
+ ["ن","Nun","n","n","Türkçedeki n. Çanak gövde, üstünde 1 nokta."],
+ ["و","Vav","v","v","Türkçedeki v. Küçük baş, aşağı kıvrık kuyruk.",1],
+ ["ه","He","h (yumuşak)","h","Hafif, yumuşak h (hava'daki gibi). Noktasız."],
+ ["لا","Lamelif","lâ","l","Lam ile Elif yan yana gelince bu özel şekli alır.",1],
+ ["ي","Ye","y","y","Türkçedeki y. Altında 2 nokta."],
+];
+const G=[
+ ["Tek başına","ilk harf",["ا"]],
+ ["Kayık ailesi","1 · 2 · 3 nokta",["ب","ت","ث"]],
+ ["Kanca ailesi","altta · yok · üstte",["ج","ح","خ"]],
+ ["Köşe ailesi","noktasız · noktalı",["د","ذ"]],
+ ["Kuyruk ailesi","noktasız · noktalı",["ر","ز"]],
+ ["Dişli aile","noktasız · 3 nokta",["س","ش"]],
+ ["Halka ailesi","kalın s · kalın d",["ص","ض"]],
+ ["Sancak ailesi","kalın t · kalın z",["ط","ظ"]],
+ ["Göz ailesi","boğaz harfleri",["ع","غ"]],
+ ["Yuvarlak baş","1 nokta · 2 nokta",["ف","ق"]],
+ ["Dik harfler","Kef · Lam",["ك","ل"]],
+ ["Kalanlar","kendine özgü",["م","ن","و","ه","لا","ي"]],
+];
+const byChar=Object.fromEntries(L.map(x=>[x[0],x]));
+const order=G.flatMap(g=>g[2]);
+const groupOf=c=>G.find(g=>g[2].includes(c))[2];
+const KALIN="خصضطظغق"; // her zaman kalın
+const isThick=c=>KALIN.includes(c)||c==="ح"||c==="ع";
+
+// --- okunuş kuralları ---
+function vowel(c,h){ // h: a,i,u
+  if(c==="ر") return {a:"a",i:"i",u:"u"}[h];
+  if(c==="ع") return {a:"a",i:"i",u:"u"}[h];
+  if(isThick(c)) return {a:"a",i:"ı",u:"u"}[h];
+  return {a:"e",i:"i",u:"ü"}[h];
+}
+const MARK={a:FA,i:KE,u:DA};
+function glyph(c,h){ // harekeli tek harf
+  if(c==="ا") return {a:"أ"+FA,i:"إ"+KE,u:"أ"+DA}[h];
+  return c+MARK[h];
+}
+function read(c,h){
+  if(c==="ا") return {a:"e",i:"i",u:"ü"}[h];
+  return byChar[c][3]+vowel(c,h);
+}
+const preV=c=>(isThick(c)||c==="ر")?"a":"e"; // cezm/şedde örneğinde öndeki elifin sesi
+// Bir harf için tüm hareke durumları
+function cases(c){
+  const k=byChar[c][3];
+  if(c==="ا") return [
+   ["sep","Elif hareke alınca (hemze olur)"],
+   ["أ"+FA,"Üstün","Üstte eğik çizgi","e"],
+   ["إ"+KE,"Esre","Altta eğik çizgi (hemze de altta)","i"],
+   ["أ"+DA,"Ötre","Üstte küçük vav","ü"],
+   ["sep","Elif uzatma harfi olunca"],
+   ["ب"+FA+"ا","Uzatma","Üstünlü harften sonra harekesiz elif → sesi uzatır","bâ"],
+   ["آ","Çeker (medd)","Elifin üstünde dalga: uzun â","â"],
+   ["sep","Tenvin üstünden sonra"],
+   ["ب"+TF+"ا","Okunmaz","Tenvin üstünden sonraki elif okunmaz","ben"],
+  ];
+  if(c==="لا") return [
+   ["ل"+FA+"ا","Lâm + elif","Lam'ın üstünü elif uzatır","lâ"],
+   ["ف"+FA+"ل"+FA+"ا","Örnek","fe + lâ","felâ"],
+   ["ب"+KE+"ل"+FA+"ا","Örnek","bi + lâ","bilâ"],
+  ];
+  const r=[
+   ["sep","Tek hareke"],
+   [glyph(c,"a"),"Üstün","Harfin üstünde eğik çizgi",read(c,"a")],
+   [glyph(c,"i"),"Esre","Harfin altında eğik çizgi",read(c,"i")],
+   [glyph(c,"u"),"Ötre","Harfin üstünde küçük vav",read(c,"u")],
+   ["sep","Cezm ve şedde"],
+   ["أ"+FA+c+SU,"Cezm","Üstte küçük halka: sesli harf yok, öncekine eklenir",preV(c)+k],
+   ["أ"+FA+c+SH+FA,"Şedde","Üstte w: harf iki kere okunur",preV(c)+k+"-"+read(c,"a")],
+   ["sep","Tenvin (sona n ekler)"],
+   [c+TF+(c==="ة"?"":"ا"),"Tenvin üstün","Çift üstün (yanındaki elif okunmaz)",read(c,"a")+"n"],
+   [c+TK,"Tenvin esre","Altta çift çizgi",read(c,"i")+"n"],
+   [c+TD,"Tenvin ötre","Üstte çift vav",read(c,"u")+"n"],
+   ["sep","Uzatma (med)"],
+   [c+FA+"ا","Üstün + elif","Elif üstünü uzatır",k+"â"],
+   [c+KE+"ي","Esre + ye","Ye esreyi uzatır",k+"î"],
+   [c+DA+"و","Ötre + vav","Vav ötreyi uzatır",k+"û"],
+  ];
+  return r;
+}
+function special(c){
+  const x=byChar[c],o=[];
+  if(c==="ا"){o.push("Elif kendisi asla hareke almaz. Üstünde veya altında hareke görürsen orada aslında <b>hemze (ء)</b> vardır: أَ e, إِ i, أُ ü.","Harekesiz elif, kendinden önceki <b>üstünlü</b> harfi uzatır: بَا bâ, قَالَ kâle.","Elifin üstünde dalga işareti (<b>çeker</b>) varsa daha uzun çekilir: آ","Kelime sonunda tenvin üstünden sonra yazılan elif okunmaz: كِتَابًا kitâben.")}
+  if(c==="و"){o.push("Harekeli olursa normal <b>v</b> okunur: وَ ve, وِ vi, وُ vü.","Harekesiz vav'dan önceki harf <b>ötreli</b> ise vav uzatma harfidir: بُو bû.","Cezmli vav'dan önceki harf <b>üstünlü</b> ise 'ev' gibi okunur: أَوْ ev, خَوْفٌ havfün.")}
+  if(c==="ي"){o.push("Harekeli olursa normal <b>y</b> okunur: يَ ye, يِ yi, يُ yü.","Harekesiz ye'den önceki harf <b>esreli</b> ise ye uzatma harfidir: بِي bî.","Cezmli ye'den önceki harf <b>üstünlü</b> ise 'ey' gibi okunur: أَيْ ey, بَيْتٌ beytün.","Kelime sonunda noktasız yazılırsa (ى) elif gibi uzatır: عَلَى alâ.")}
+  if(c==="ر"){o.push("Ra <b>üstün ve ötrede kalın</b> (ra, ru), <b>esrede ince</b> (ri) okunur.","Cezmli ra'dan önce üstün veya ötre varsa kalın okunur: أَرْ ar.")}
+  if(c==="ه"){o.push("Kelime sonundaki iki noktalı he (<span class=\"ar\" style=\"font-size:1.3rem\">ة</span>) <b>yuvarlak te</b>dir: okumaya devam edince t, durunca h okunur.")}
+  if(c==="لا"){o.push("Lam ile elif yan yana gelince ayrı yazılmaz, bu birleşik şekil kullanılır.","Hareke lam'ın üstüne konur, elif onu uzatır: لَا lâ.")}
+  if(KALIN.includes(c)) o.push("<b>Kalın harftir</b>, her zaman ağız dolu okunur: üstün <b>a</b>, esre <b>ı</b>, ötre <b>u</b> (ince harflerdeki e, i, ü değil).");
+  if(c==="ح") o.push("Ha kalın okunur: حَ ha, حِ hı, حُ hu. Yumuşak he (ه) ile karıştırma.");
+  if(c==="ع") o.push("Ayn'ın sesi boğazdan gelir: عَ ‘a, عِ ‘i, عُ ‘u. Elif'in hemzesi (أَ e) gibi değil, boğazı sıkarak okunur.");
+  if(["ث","ذ","ظ"].includes(c)) o.push("Peltek harftir: dil ucu ön dişlerin arasına hafifçe çıkar.");
+  if(x[5]&&c!=="لا") o.push("Kendinden <b>sonraki</b> harfe bitişmez. Ondan sonra gelen harf baş şekliyle yazılır.");
+  return o;
+}
+
+let done=new Set();
+try{done=new Set(JSON.parse(localStorage.getItem("elifba-done")||"[]"))}catch(e){}
+function save(){try{localStorage.setItem("elifba-done",JSON.stringify([...done]))}catch(e){}}
+function prog(){const n=done.size;document.getElementById("progTxt").textContent=n+" / 29 öğrenildi";document.getElementById("progBar").style.width=(n/29*100)+"%"}
+function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(o=>o.setAttribute("aria-selected",o===b));
+  document.querySelectorAll("main section").forEach(s=>s.hidden=s.id!==b.dataset.t);
+  document.querySelector("main").scrollTop=0;
+  if(b.dataset.t==="test"&&(!q||q.n===0))newRound();
+});
+
+// ===== HARFLER =====
+function renderGroups(){
+  const box=document.getElementById("groups");box.innerHTML="";
+  G.forEach(([t,s,cs])=>{
+    const g=document.createElement("div");g.className="group";
+    g.innerHTML=`<h3>${t}<span>${s}</span></h3><div class="row"></div>`;
+    const r=g.querySelector(".row");
+    cs.forEach(c=>{const x=byChar[c];const b=document.createElement("button");b.className="card"+(done.has(c)?" done":"");
+      b.innerHTML=`<span class="ar">${c}</span><span class="nm">${x[1]}</span>`;b.onclick=()=>openLetter(c);r.appendChild(b)});
+    box.appendChild(g);
+  });
+}
+function forms(c){
+  const x=byChar[c];
+  if(c==="لا") return [["لا","tek"],["ـلا","sonda"],["ـلا","ortada"],["لا","başta"]];
+  if(x[5]) return [[c,"tek"],[TAT+c,"sonda"],[TAT+c,"ortada"],[c,"başta"]];
+  return [[c,"tek"],[TAT+c,"sonda"],[TAT+c+TAT,"ortada"],[c+TAT,"başta"]];
+}
+function htable(rows){
+  return `<div class="htab">${rows.map(r=>r[0]==="sep"?`<div class="hsep">${r[1]}</div>`:
+    `<div class="hrow"><span class="ar">${r[0]}</span><div><div class="hn">${r[1]}</div><div class="hd">${r[2]}</div></div><span class="rd">${r[3]}</span></div>`).join("")}</div>`;
+}
+function openLetter(c){
+  const x=byChar[c],i=order.indexOf(c);
+  const sib=groupOf(c).filter(o=>o!==c);
+  const sp=special(c);
+  const P=document.getElementById("panel");
+  P.innerHTML=`
+   <div class="ptop"><div class="big ar">${c}</div><div><h2>${x[1]}</h2><p>Ses: <b>${x[2]}</b>${isThick(c)||c==="ر"?" · kalın":""}</p>${sib.length?`<p>Benzeri: <span class="ar" style="font-size:1.6rem">${sib.join("  ")}</span></p>`:""}</div></div>
+   <div class="note">${x[4]}</div>
+   <div><p class="lbl">Hareke gelince nasıl okunur?</p>${htable(cases(c))}</div>
+   ${sp.length?`<div><p class="lbl">Bu harfe özel kurallar</p><ul class="rules">${sp.map(s=>`<li>${s.replace(/[\u0600-\u06FF]+/g,m=>`<span class="ar" style="font-size:1.3rem">${m}</span>`)}</li>`).join("")}</ul></div>`:""}
+   <div><p class="lbl">Kelime içindeki şekilleri (sağdan sola)</p><div class="forms">${form4(c).map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
+   <div class="btns">
+     <button class="btn wide ${done.has(c)?"on":"pri"}" id="lrn">${done.has(c)?"✓ Öğrendim":"Öğrendim"}</button>
+     <button class="btn" id="prv" ${i===0?"disabled":""}>‹ Önceki</button>
+     <button class="btn" id="nxt" ${i===order.length-1?"disabled":""}>Sonraki ›</button>
+     <button class="btn wide" id="cls">Kapat</button>
+   </div>`;
+  document.getElementById("sheet").hidden=false;P.scrollTop=0;
+  P.querySelector("#lrn").onclick=()=>{done.has(c)?done.delete(c):(done.add(c),buzz(30));save();prog();renderGroups();openLetter(c)};
+  P.querySelector("#prv").onclick=()=>openLetter(order[i-1]);
+  P.querySelector("#nxt").onclick=()=>openLetter(order[i+1]);
+  P.querySelector("#cls").onclick=closeSheet;
+}
+function closeSheet(){document.getElementById("sheet").hidden=true}
+document.getElementById("sheet").onclick=e=>{if(e.target.id==="sheet")closeSheet()};
+
+// ===== HAREKELER =====
+const LET=L.filter(x=>x[0]!=="لا").map(x=>x[0]);
+const LETN=LET.filter(c=>c!=="ا");
+const HK=[
+ {id:"a",ar:"بَ",ad:"Üstün",t:"Harfin <b>üstüne</b> konan eğik çizgi. <b>e</b> veya <b>a</b> sesi verir. İnce harflerde <b>e</b> (بَ be), kalın harflerde <b>a</b> (صَ sa) okunur.",
+  items:()=>LET.map(c=>[glyph(c,"a"),read(c,"a")])},
+ {id:"i",ar:"بِ",ad:"Esre",t:"Harfin <b>altına</b> konan eğik çizgi. <b>i</b> veya <b>ı</b> sesi verir. İnce harflerde <b>i</b> (بِ bi), kalın harflerde <b>ı</b> (صِ sı) okunur.",
+  items:()=>LET.map(c=>[glyph(c,"i"),read(c,"i")])},
+ {id:"u",ar:"بُ",ad:"Ötre",t:"Harfin <b>üstüne</b> konan küçük vav (virgül gibi). <b>ü</b> veya <b>u</b> sesi verir. İnce harflerde <b>ü</b> (بُ bü), kalın harflerde <b>u</b> (صُ su) okunur.",
+  items:()=>LET.map(c=>[glyph(c,"u"),read(c,"u")])},
+ {id:"c",ar:"بْ",ad:"Cezm",t:"Harfin üstündeki küçük <b>halka</b>. Bu harfin sesli harfi <b>yoktur</b>; kendinden önceki harekeli harfle birlikte tek hece okunur: أَبْ <b>eb</b>, مِنْ <b>min</b>, قُلْ <b>kul</b>.",
+  items:()=>LETN.map(c=>["أ"+FA+c+SU,preV(c)+byChar[c][3]])},
+ {id:"s",ar:"بّ",ad:"Şedde",t:"Harfin üstündeki küçük <b>w</b>. Harf <b>iki kere</b> okunur: önce cezmli, sonra harekeli. أَبَّ <b>eb-be</b>, رَبِّ <b>rab-bi</b>, ثُمَّ <b>süm-me</b>.",
+  items:()=>LETN.map(c=>["أ"+FA+c+SH+FA,preV(c)+byChar[c][3]+"-"+read(c,"a")])},
+ {id:"tf",ar:"بً",ad:"Tenvin üstün",t:"<b>İki üstün</b>. Sona <b>n</b> ekler: بًا <b>ben</b>. Yanına genelde bir elif yazılır, o elif <b>okunmaz</b>.",
+  items:()=>LETN.map(c=>[c+TF+"ا",read(c,"a")+"n"])},
+ {id:"tk",ar:"بٍ",ad:"Tenvin esre",t:"Altta <b>iki esre</b>. Sona <b>n</b> ekler: بٍ <b>bin</b>, صٍ <b>sın</b>.",
+  items:()=>LETN.map(c=>[c+TK,read(c,"i")+"n"])},
+ {id:"td",ar:"بٌ",ad:"Tenvin ötre",t:"Üstte <b>iki ötre</b>. Sona <b>n</b> ekler: بٌ <b>bün</b>, صٌ <b>sun</b>.",
+  items:()=>LETN.map(c=>[c+TD,read(c,"u")+"n"])},
+ {id:"m",ar:"بَا",ad:"Uzatma",t:"Üç uzatma harfi var: <b>elif</b>, <b>vav</b>, <b>ye</b>. Harekesiz olarak gelince önceki harfin sesini uzatırlar: üstün + elif → <b>â</b> (بَا bâ), esre + ye → <b>î</b> (بِي bî), ötre + vav → <b>û</b> (بُو bû).",
+  items:()=>LETN.flatMap(c=>[[c+FA+"ا",byChar[c][3]+"â"],[c+KE+"ي",byChar[c][3]+"î"],[c+DA+"و",byChar[c][3]+"û"]])},
+];
+let hkSel="a",hide=false;
+function renderHk(){
+  const ch=document.getElementById("hkChips");ch.innerHTML="";
+  HK.forEach(h=>{const b=document.createElement("button");b.className=h.id===hkSel?"sel":"";
+    b.innerHTML=`<span class="ar">${h.ar}</span>${h.ad}`;b.onclick=()=>{hkSel=h.id;renderHk()};ch.appendChild(b)});
+  const h=HK.find(o=>o.id===hkSel);
+  document.getElementById("hkExplain").innerHTML=`<h3>${h.ad} <span class="ar" style="color:var(--accent);font-weight:400">${h.ar}</span></h3><p>${h.t}</p>`;
+  const g=document.getElementById("sylGrid");g.innerHTML="";g.className="syl"+(hide?" hide":"");
+  h.items().forEach(([a,r])=>{const x=document.createElement("button");x.innerHTML=`<span class="ar">${a}</span><small>${r}</small>`;
+    x.onclick=()=>x.classList.toggle("show");g.appendChild(x)});
+}
+document.getElementById("hideBtn").onclick=e=>{hide=!hide;e.target.textContent=hide?"Okunuşları göster":"Okunuşları gizle, kendimi deneyeyim";renderHk()};
+
+// ===== KURALLAR =====
+const R=[
+ ["Üstün","بَ","Harfin <b>üstünde</b> eğik çizgi. İnce harflerde <b>e</b>, kalın harflerde <b>a</b> okunur.",[["بَ","be"],["سَ","se"],["كَ","ke"],["صَ","sa"],["قَ","ka"],["طَ","ta"]]],
+ ["Esre","بِ","Harfin <b>altında</b> eğik çizgi. İnce harflerde <b>i</b>, kalın harflerde <b>ı</b> okunur.",[["بِ","bi"],["سِ","si"],["كِ","ki"],["صِ","sı"],["قِ","kı"],["طِ","tı"]]],
+ ["Ötre","بُ","Harfin <b>üstünde</b> küçük vav. İnce harflerde <b>ü</b>, kalın harflerde <b>u</b> okunur.",[["بُ","bü"],["سُ","sü"],["كُ","kü"],["صُ","su"],["قُ","ku"],["طُ","tu"]]],
+ ["Kalın ve ince harfler","ق",`Şu 7 harf <b>her zaman kalın</b> okunur: <span class="ar" style="font-size:1.4rem">خ ص ض ط ظ غ ق</span>. Ayrıca <b>ح</b> ve <b>ع</b> kalın sesle okunur. <b>ر</b> üstün ve ötrede kalın, esrede incedir. Diğer harfler incedir.`,[["سَ","se"],["صَ","sa"],["كَ","ke"],["قَ","ka"],["رَ","ra"],["رِ","ri"]]],
+ ["Hece okuma","كَتَبَ","Harekeli harfler yan yana gelince her biri bir hece olur. Sağdan başlayıp tek tek oku.",[["كَتَبَ","ke-te-be"],["جَلَسَ","ce-le-se"],["خَلَقَ","ha-la-ka"],["سَمِعَ","se-mi-‘a"],["كُتُبُ","kü-tü-bü"]]],
+ ["Cezm","بْ","Harfin üstünde küçük <b>halka</b>. Bu harf sesli harf almaz, <b>önceki heceye eklenir</b>.",[["أَبْ","eb"],["مِنْ","min"],["قُلْ","kul"],["لَمْ","lem"],["هُمْ","hüm"]]],
+ ["Şedde","بّ","Harfin üstünde küçük <b>w</b>. Harf <b>iki kere</b> okunur: biri önceki heceye cezmli eklenir, ikincisi kendi harekesiyle okunur.",[["رَبِّ","rab-bi"],["إِنَّ","in-ne"],["ثُمَّ","süm-me"],["أَبَّ","eb-be"]]],
+ ["Tenvin","بٌ","Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> sesi ekler. Tenvin üstünden sonra gelen elif <b>okunmaz</b>.",[["بًا","ben"],["بٍ","bin"],["بٌ","bün"],["قَلَمٌ","ka-le-mün"],["أَحَدٌ","e-ha-dün"]]],
+ ["Uzatma (med) harfleri","ا و ي","<b>Elif, vav, ye</b> harekesiz gelirse önceki sesi uzatır: üstünden sonra elif → <b>â</b>, esreden sonra ye → <b>î</b>, ötreden sonra vav → <b>û</b>. Bir elif miktarı (iki hareke) uzatılır.",[["بَا","bâ"],["بِي","bî"],["بُو","bû"],["قَالَ","kâ-le"],["قِيلَ","kî-le"],["يَقُولُ","ye-kû-lü"]]],
+ ["Lin (ev, ey)","أَوْ","Cezmli <b>vav</b> veya <b>ye</b>'den önce <b>üstün</b> gelirse uzatmaz, yumuşak okunur: <b>ev</b>, <b>ey</b>.",[["أَوْ","ev"],["أَيْ","ey"],["خَوْفٌ","hav-fün"],["بَيْتٌ","bey-tün"]]],
+ ["Çeker (medd işareti)","آ","Harfin üstündeki <b>dalga</b> işareti. Normal uzatmadan <b>daha uzun</b> çekilir (yaklaşık 2–5 elif miktarı). Öğretmeninden dinleyerek öğrenmek en iyisidir.",[["آ","â (uzun)"],["آمَنَ","â-me-ne"],["جَاءَ","câ-e"],["السَّمَاءِ","es-se-mâ-i"]]],
+ ["Ters harekeler","ـٰ","Hareke <b>dik</b> yazılırsa sesi uzatır. Dik üstün → <b>â</b>, ters esre → <b>î</b>, ters ötre → <b>û</b>.",[["هٰذَا","hâ-zâ"],["بِهٖ","bi-hî"],["لَهٗ","le-hû"]]],
+ ["Hemze","ء","Kısa, kesik bir <b>e</b> sesi taşıyıcısıdır. Genelde elif, vav veya ye'nin üstünde/altında durur. Harekeli elif aslında hemzedir.",[["أَ","e"],["إِ","i"],["أُ","ü"],["سَأَلَ","se-e-le"],["يُؤْمِنُ","yü’-mi-nü"]]],
+ ["Yuvarlak te","ة","Kelime sonunda iki noktalı yuvarlak he. Okumaya devam ederken <b>t</b>, kelimede durunca <b>h</b> okunur.",[["صَلَاةٌ","sa-lâ-tün"],["رَحْمَةٌ","rah-me-tün"]]],
+ ["Bitişmeyen harfler","د ر و","Şu 6 harf kendinden <b>sonraki</b> harfe bitişmez: <span class=\"ar\" style=\"font-size:1.4rem\">ا د ذ ر ز و</span>. Onlardan sonra gelen harf yeni baştan yazılmış gibi görünür.",[["دَارٌ","dâ-rün"],["وَرَدَ","ve-ra-de"],["زَادَ","zâ-de"]]],
+];
+function renderRules(){
+  document.getElementById("rules").innerHTML=R.map((r,i)=>`<div class="rule"><h3><span class="num">${i+1}</span>${r[0]}<span class="ar">${r[1]}</span></h3><p>${r[2]}</p>
+   <div class="ex">${r[3].map(e=>`<div><span class="ar">${e[0]}</span><small>${e[1]}</small></div>`).join("")}</div></div>`).join("");
+}
+
+// ===== TEST =====
+let mode="harf",set="all",q=null;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function pool(){const all=(mode==="harf"||mode==="ters")?L.map(x=>x[0]):LET;if(set==="done"){const d=all.filter(c=>done.has(c));if(d.length>=4)return d}return all}
+function newRound(){
+  const p=pool();const queue=[];while(queue.length<10)queue.push(...shuffle(p.slice()));
+  q={n:0,score:0,total:10,missed:[],queue:queue.slice(0,10)};nextQ();
+}
+function nearLetters(c){const near=shuffle(groupOf(c).filter(o=>o!==c&&o!=="لا"));const far=shuffle(LET.filter(o=>o!==c&&!near.includes(o)));return [...near,...far]}
+const SIGNS=[["a","Üstün"],["i","Esre"],["u","Ötre"],["c","Cezm"],["s","Şedde"],["tf","Tenvin üstün"],["tk","Tenvin esre"],["td","Tenvin ötre"]];
+function signGlyph(c,s){if(c==="ا")return glyph(c,s);return {a:c+FA,i:c+KE,u:c+DA,c:c+SU,s:c+SH,tf:c+TF,tk:c+TK,td:c+TD}[s]}
+function makeQ(c){
+  if(mode==="harf"){const opts=shuffle([c,...nearLetters(c).slice(0,2),...shuffle(L.map(x=>x[0]).filter(o=>o!==c&&!groupOf(c).includes(o)))].slice(0,4));
+    return {ask:"Bu harf nedir?",show:c,big:1,ans:c,opts:opts.map(o=>[o,byChar[o][1]]),fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,key:c}}
+  if(mode==="ters"){const opts=shuffle([c,...nearLetters(c).slice(0,2),...shuffle(L.map(x=>x[0]).filter(o=>o!==c&&!groupOf(c).includes(o)))].slice(0,4));
+    return {ask:"Hangisi bu harf?",name:byChar[c][1],ans:c,glyphs:1,opts:opts.map(o=>[o,o]),fbOk:`${byChar[c][1]} = ${c}`,key:c}}
+  if(mode==="hece"){
+    const h="aiu"[Math.random()*3|0];const ans=read(c,h);
+    const same=shuffle("aiu".split("").filter(o=>o!==h).map(o=>read(c,o)));
+    const other=[];nearLetters(c).forEach(o=>{const r=read(o,h);if(r!==ans&&!same.includes(r)&&!other.includes(r))other.push(r)});
+    const opts=shuffle([ans,same[0],...other.slice(0,2)]);
+    const g=glyph(c,h);
+    return {ask:"Bu nasıl okunur?",show:g,big:1,ans,opts:opts.map(o=>[o,o]),fbOk:`${g} = ${ans} (${byChar[c][1]} ${({a:"üstün",i:"esre",u:"ötre"})[h]})`,key:g,ansLabel:ans};
+  }
+  // isaret
+  const pickFrom=c==="ا"?SIGNS.slice(0,3):SIGNS;
+  const s=pickFrom[Math.random()*pickFrom.length|0];
+  const others=shuffle(SIGNS.filter(o=>o[0]!==s[0])).slice(0,3);
+  const g=signGlyph(c,s[0]);
+  return {ask:"Bu harfin işareti hangisi?",show:g,big:1,ans:s[0],opts:shuffle([s,...others]),fbOk:`${s[1]}`,key:g,ansLabel:s[1]};
+}
+function nextQ(){
+  const Q=document.getElementById("quiz");
+  if(q.n>=q.total){
+    const s=q.score;
+    Q.innerHTML=`<div class="qstat"><span>Tur bitti</span><span></span></div>
+     <div class="stars">${s>=9?"★★★":s>=6?"★★☆":"★☆☆"}</div>
+     <div class="score">${s} / ${q.total}</div>
+     <p style="margin:0">${s>=9?"Harika! Bunlar sende.":s>=6?"İyi gidiyorsun. Karıştırdıklarına bir daha bak.":"Sorun değil, tekrar ettikçe oturacak."}</p>
+     ${q.missed.length?`<p style="margin:0;color:var(--muted)">Karıştırdıkların:</p><div class="ar" style="font-size:2.4rem;line-height:1.8">${[...new Set(q.missed)].join("   ")}</div>`:""}
+     <button class="btn pri" id="again" style="width:100%">Yeni tur</button>`;
+    Q.querySelector("#again").onclick=newRound;return;
+  }
+  const c=q.queue[q.n];const Z=makeQ(c);q.cur=Z;
+  Q.innerHTML=`<div class="qstat"><span>Soru ${q.n+1} / ${q.total}</span><span>Doğru: ${q.score}</span></div>
+   <p class="qask">${Z.ask}</p>
+   ${Z.name?`<div class="qname">${Z.name}</div>`:`<div class="qglyph ar">${Z.show}</div>`}
+   <div class="opts ${Z.glyphs?"glyphs":""}"></div><div class="fb" aria-live="polite"></div>`;
+  const O=Q.querySelector(".opts");
+  Z.opts.forEach(([v,label])=>{const b=document.createElement("button");b.dataset.v=v;b.textContent=label;b.onclick=()=>answer(b,v);O.appendChild(b)});
+}
+function answer(b,v){
+  const Q=document.getElementById("quiz"),Z=q.cur;
+  Q.querySelectorAll(".opts button").forEach(el=>{el.disabled=true;if(el.dataset.v===Z.ans)el.classList.add("ok","pop")});
+  const fb=Q.querySelector(".fb");
+  const right=Q.querySelector(`.opts button[data-v="${CSS.escape(Z.ans)}"]`).textContent;
+  if(v===Z.ans){q.score++;buzz(25);fb.style.color="var(--good)";fb.innerHTML=`✓ Doğru!<small>${Z.fbOk}</small>`}
+  else{b.classList.add("no");buzz([60,60,60]);q.missed.push(Z.key);fb.style.color="var(--bad)";
+    fb.innerHTML=`✗ Yanlış. Doğrusu: <span class="${Z.glyphs?"ar":""}" style="${Z.glyphs?"font-size:1.6rem":""}">${right}</span><small>${Z.fbOk}</small>`}
+  q.n++;setTimeout(nextQ,v===Z.ans?1100:2400);
+}
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(o=>o.classList.toggle("sel",o===b));newRound()});
+document.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{
+  if(b.dataset.set==="done"&&done.size<4){const f=document.querySelector("#quiz .fb");if(f)f.innerHTML=`<small>Önce en az 4 harfi "Öğrendim" olarak işaretle.</small>`;return}
+  set=b.dataset.set;document.querySelectorAll("[data-set]").forEach(o=>o.classList.toggle("sel",o===b));newRound()});
+
+// ===== HARF ÖĞREN =====
+const FARK={"ا":"dik çizgi","ب":"altta 1 nokta","ت":"üstte 2 nokta","ث":"üstte 3 nokta","ج":"altta 1 nokta","ح":"noktasız","خ":"üstte 1 nokta",
+ "د":"noktasız","ذ":"üstte 1 nokta","ر":"noktasız","ز":"üstte 1 nokta","س":"noktasız, 3 diş","ش":"üstte 3 nokta","ص":"noktasız","ض":"üstte 1 nokta",
+ "ط":"noktasız","ظ":"üstte 1 nokta","ع":"noktasız","غ":"üstte 1 nokta","ف":"üstte 1 nokta","ق":"üstte 2 nokta","ك":"içinde küçük işaret",
+ "ل":"kıvrık uzun çizgi","م":"yuvarlak baş, kuyruk","ن":"çanak, üstte 1 nokta","و":"küçük baş, kuyruk","ه":"noktasız yuvarlak","لا":"ل + ا birleşik","ي":"altta 2 nokta"};
+const TEETH="بتثني";
+const SHAPE_NOTE={
+ "ه":"Şekli en çok değişen harflerden: başta هـ, ortada ـهـ, sonda ـه. Ezberlemek için bu üçüne iyi bak.",
+ "ع":"Başta açık ağız عـ, ortada dolu küçük üçgen ـعـ, sonda kuyruklu ـع.",
+ "غ":"Ayn gibi değişir, sadece üstünde 1 nokta var: غـ ـغـ ـغ.",
+ "ك":"Başta ve ortada üstündeki küçük işaret uzun bir çizgiye dönüşür: كـ ـكـ.",
+ "ي":"Başta ve ortada küçük bir dişe dönüşür, altındaki 2 nokta kalır: يـ ـيـ.",
+ "ن":"Başta ve ortada Be gibi küçük bir diş olur, noktası üstte kalır: نـ ـنـ.",
+ "ف":"Başta ve ortada kuyruk kaybolur, yuvarlak baş kalır. Kaf ile aynı şekil, Fe'de 1 nokta var.",
+ "ق":"Başta ve ortada kuyruk kaybolur, yuvarlak baş kalır. Fe ile aynı şekil, Kaf'ta 2 nokta var.",
+ "ج":"Başta ve ortada alttaki büyük kuyruk kaybolur, sadece baş kalır.",
+ "ح":"Başta ve ortada alttaki büyük kuyruk kaybolur, sadece baş kalır.",
+ "خ":"Başta ve ortada alttaki büyük kuyruk kaybolur, sadece baş kalır.",
+ "س":"Başta ve ortada kuyruk kaybolur, sadece 3 diş kalır.",
+ "ش":"Başta ve ortada kuyruk kaybolur, 3 diş ve 3 nokta kalır.",
+ "ص":"Başta ve ortada kuyruk kaybolur, halka kalır.",
+ "ض":"Başta ve ortada kuyruk kaybolur, halka ve nokta kalır.",
+ "م":"Başta ve ortada küçük yuvarlak bir top olur, sonda aşağı kuyruk ekler.",
+ "ل":"Başta ve ortada dik bir çizgi olur, Elif'e benzer. Farkı: Lam sonrakine bitişir, Elif bitişmez.",
+};
+let lessonsDone=new Set();
+try{lessonsDone=new Set(JSON.parse(localStorage.getItem("elifba-lessons")||"[]"))}catch(e){}
+function saveLessons(){try{localStorage.setItem("elifba-lessons",JSON.stringify([...lessonsDone]))}catch(e){}}
+let learnView="ders",shapeSel="ب";
+const ALLC=L.map(x=>x[0]);
+
+function form4(c){ // sağdan sola: tek, başta, ortada, sonda
+  const x=byChar[c];
+  if(c==="لا") return [["لا","tek"],["لا","başta"],["ـلا","ortada"],["ـلا","sonda"]];
+  if(x[5]) return [[c,"tek"],[c,"başta"],[TAT+c,"ortada"],[TAT+c,"sonda"]];
+  return [[c,"tek"],[c+TAT,"başta"],[TAT+c+TAT,"ortada"],[TAT+c,"sonda"]];
+}
+function posForm(c,pos){return form4(c)[{"başta":1,"ortada":2,"sonda":3}[pos]][0]}
+function optList(c,prefer,pool,n){
+  const out=[c];
+  for(const o of shuffle(prefer.slice())) if(!out.includes(o)&&out.length<n) out.push(o);
+  for(const o of shuffle(pool.slice())) if(!out.includes(o)&&out.length<n) out.push(o);
+  return shuffle(out);
+}
+
+function miniQuiz(el,qs,opt){
+  let queue=qs.slice(),n=0,score=0;const total=qs.length,missed=[];
+  function next(){
+    if(!queue.length){opt.onDone(score,total,missed);return}
+    const Z=queue.shift();
+    el.innerHTML=`<div class="qstat"><span>${opt.retry?`Kalan soru: ${queue.length+1}`:`Soru ${n+1} / ${total}`}</span><span>Doğru: ${score}</span></div>
+     <p class="qask">${Z.ask}</p>
+     ${Z.name?`<div class="qname">${Z.name}</div>`:`<div class="qglyph ar">${Z.show}</div>`}
+     ${Z.sub?`<p class="qpos">${Z.sub}</p>`:""}
+     <div class="opts ${Z.glyphs?"glyphs":""}"></div><div class="fb" aria-live="polite"></div>`;
+    const O=el.querySelector(".opts");
+    Z.opts.forEach(([v,label])=>{const b=document.createElement("button");b.dataset.v=v;b.textContent=label;O.appendChild(b);
+      b.onclick=()=>{
+        O.querySelectorAll("button").forEach(x=>{x.disabled=true;if(x.dataset.v===Z.ans)x.classList.add("ok","pop")});
+        const fb=el.querySelector(".fb");const ok=v===Z.ans;
+        const right=[...O.querySelectorAll("button")].find(x=>x.dataset.v===Z.ans).textContent;
+        if(ok){if(!Z.tried)score++;buzz(25);fb.style.color="var(--good)";fb.innerHTML=`✓ Doğru!<small>${Z.fbOk}</small>`}
+        else{b.classList.add("no");buzz([60,60,60]);missed.push(Z.key);fb.style.color="var(--bad)";
+          fb.innerHTML=`✗ Yanlış. Doğrusu: <span class="${Z.glyphs?"ar":""}" style="${Z.glyphs?"font-size:1.6rem":""}">${right}</span><small>${Z.fbOk}${opt.retry?" · Bu soru birazdan tekrar gelecek.":""}</small>`;
+          if(opt.retry){Z.tried=1;Z.opts=shuffle(Z.opts.slice());queue.splice(Math.min(2,queue.length),0,Z)}}
+        n++;setTimeout(next,ok?1000:2300);
+      }});
+  }
+  next();
+}
+
+function renderLearn(){
+  document.getElementById("learnSeg").hidden=false;
+  document.querySelectorAll("[data-lv]").forEach(b=>b.classList.toggle("sel",b.dataset.lv===learnView));
+  const box=document.getElementById("learnBody");
+  if(learnView==="ders") renderLessonList(box); else if(learnView==="yazilis") renderShapes(box); else renderEzber(box);
+  document.querySelector("main").scrollTop=0;
+}
+document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{if(typeof ezLeave==="function")ezLeave();learnView=b.dataset.lv;renderLearn()});
+
+function renderLessonList(box){
+  const next=G.findIndex((g,i)=>!lessonsDone.has(i));
+  box.innerHTML=`<div class="intro">Harfleri <b>12 kısa derste</b> öğren. Her derste birbirine benzeyen harflerle tek tek tanışırsın, sonra küçük bir alıştırma yaparsın. Yanlış yaptığın soru tekrar gelir. <b>${lessonsDone.size} / 12</b> ders tamamlandı.</div>
+   <div class="path">${G.map((g,i)=>`<button class="lesson ${lessonsDone.has(i)?"ok":""} ${i===next?"next":""}" data-i="${i}">
+     <span class="ln">${lessonsDone.has(i)?"✓":i+1}</span>
+     <span class="lt"><b>${g[0]}</b><small>${i===next?"Sıradaki ders · ":""}${g[2].map(c=>byChar[c][1]).join(", ")}</small></span>
+     <span class="ar lg">${g[2].join(" ")}</span></button>`).join("")}</div>`;
+  box.querySelectorAll(".lesson").forEach(b=>b.onclick=()=>startLesson(+b.dataset.i));
+}
+
+function startLesson(i){
+  const cs=G[i][2];let step=0;
+  const box=document.getElementById("learnBody");
+  document.getElementById("learnSeg").hidden=true;
+  const top=()=>`<div class="ltop"><button class="btn sm" id="back">‹ Dersler</button><span>${i+1}. ders · ${G[i][0]}</span></div>
+    <div class="dots">${[...cs,"?"].map((c,k)=>`<i class="${k<step?"d":k===step?"c":""}"></i>`).join("")}</div>`;
+  const bindBack=()=>box.querySelector("#back").onclick=renderLearn;
+  function show(){
+    document.querySelector("main").scrollTop=0;
+    if(step>=cs.length) return practice();
+    const c=cs[step],x=byChar[c];
+    box.innerHTML=top()+`<div class="meet">
+      <div class="head"><p class="lbl">${step+1}. harf · yeni</p><div class="mglyph ar">${c}</div><h2>${x[1]}</h2><p class="snd">Sesi: <b>${x[2]}</b></p></div>
+      <div class="note">${x[4]}</div>
+      ${cs.length>1?`<div><p class="lbl">Ailesiyle karşılaştır</p><div class="fam">${cs.map(o=>`<div class="${o===c?"me":""}"><span class="ar">${o}</span><b>${byChar[o][1]}</b><small>${FARK[o]}</small></div>`).join("")}</div></div>`:""}
+      <div><p class="lbl">Kelime içinde (sağdan sola)</p><div class="forms4">${form4(c).map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
+      <button class="btn pri" id="go">${step<cs.length-1?"Anladım, sonraki harf ›":"Anladım, alıştırmaya geç ›"}</button>
+      ${step>0?`<button class="btn" id="prev">‹ Önceki harf</button>`:""}</div>`;
+    bindBack();
+    box.querySelector("#go").onclick=()=>{step++;show()};
+    const pv=box.querySelector("#prev");if(pv)pv.onclick=()=>{step--;show()};
+  }
+  function practice(){
+    const prevL=G.slice(0,i).flatMap(g=>g[2]);
+    const known=[...prevL,...cs];
+    const qs=[];
+    cs.forEach(c=>{
+      qs.push({ask:"Bu harf nedir?",show:c,ans:c,key:c,opts:optList(c,cs,known.length>=4?known:ALLC,Math.min(4,Math.max(3,known.length))).map(o=>[o,byChar[o][1]]),fbOk:`${c} = ${byChar[c][1]} · ${FARK[c]}`});
+      qs.push({ask:"Hangisi bu harf?",name:byChar[c][1],ans:c,key:c,glyphs:1,opts:optList(c,cs,ALLC,4).map(o=>[o,o]),fbOk:`${byChar[c][1]} = ${c} · ${FARK[c]}`});
+    });
+    shuffle(prevL.slice()).slice(0,2).forEach(c=>qs.push({ask:"Tekrar: bu harf nedir?",show:c,ans:c,key:c,opts:optList(c,groupOf(c),known,4).map(o=>[o,byChar[o][1]]),fbOk:`${c} = ${byChar[c][1]}`}));
+    box.innerHTML=top()+`<div class="quiz" id="lq"></div>`;bindBack();
+    miniQuiz(document.getElementById("lq"),shuffle(qs),{retry:true,onDone:(s,t,m)=>finish(s,t,m)});
+  }
+  function finish(s,t,m){
+    step=cs.length+1;
+    lessonsDone.add(i);cs.forEach(c=>done.add(c));save();saveLessons();prog();renderGroups();
+    const nx=i+1<G.length?i+1:-1;
+    box.innerHTML=top()+`<div class="quiz">
+      <div class="stars">${s===t?"★★★":s>=t*0.6?"★★☆":"★☆☆"}</div>
+      <h2 style="margin:0">Ders tamamlandı!</h2>
+      <p style="margin:0">İlk denemede <b>${s} / ${t}</b> doğru.</p>
+      <div class="ar" style="font-size:3rem;line-height:1.7;color:var(--accent)">${cs.join("  ")}</div>
+      <p style="margin:0;color:var(--muted)">Bu harfler "öğrendim" olarak işaretlendi.</p>
+      ${nx>=0?`<button class="btn pri" id="nx" style="width:100%">Sonraki ders: ${G[nx][0]} ›</button>`:`<p style="margin:0"><b>Tüm harfleri bitirdin!</b> Şimdi "Yazılış" ve "Ezber" bölümlerine geç.</p>`}
+      <button class="btn" id="again" style="width:100%">Bu dersi tekrar et</button>
+      <button class="btn" id="list" style="width:100%">Ders listesine dön</button></div>`;
+    bindBack();
+    const n=box.querySelector("#nx");if(n)n.onclick=()=>startLesson(nx);
+    box.querySelector("#again").onclick=()=>startLesson(i);
+    box.querySelector("#list").onclick=renderLearn;
+  }
+  show();
+}
+
+function shapeNotes(c){
+  const o=[];
+  if(byChar[c][5]&&c!=="ا"&&c!=="لا") o.push("Kendinden sonraki harfe <b>bitişmez</b>. Bu yüzden başta yazılışı tek hali gibidir, ortada ve sonda sadece öncekine bağlanır.");
+  if(c==="ا") o.push("Elif sonrakine <b>bitişmez</b>: başta tek hali gibi yazılır, ortada ve sonda sadece öncekine bağlanır.");
+  if(c==="لا") o.push("Lamelif sonrakine bitişmez; öncesine bağlanırsa ـلا şeklini alır.");
+  if(SHAPE_NOTE[c]) o.push(SHAPE_NOTE[c].replace(/[\u0600-\u06FF]+/g,m=>`<span class="ar" style="font-size:1.35rem">${m}</span>`));
+  if(TEETH.includes(c)) o.push(`Başta ve ortada <span class="ar" style="font-size:1.3rem">ب ت ث ن ي</span> aynı küçük <b>diş</b> şekline girer. Hangisi olduğunu sadece <b>noktalardan</b> anlarsın.`);
+  return o;
+}
+function renderShapes(box){
+  const c=shapeSel,x=byChar[c];
+  const j=c==="لا"?[["لاب","başta"],["بلاب","ortada"],["بلا","sonda"]]:[[c+"ب","başta"],["ب"+c+"ب","ortada"],["ب"+c,"sonda"]];
+  const notes=shapeNotes(c);
+  box.innerHTML=`<div class="intro">Kelimede harfler yanındakilere <b>bağlanır</b>, bu yüzden her harfin 4 yazılışı var: <b>tek</b>, <b>başta</b>, <b>ortada</b>, <b>sonda</b>. Bir harf seç, şekillerine bak.</div>
+   <div class="lchips">${order.map(o=>`<button data-c="${o}" class="${o===c?"sel":""}">${o}</button>`).join("")}</div>
+   <div class="meet">
+     <div class="head"><h2>${x[1]} <span class="ar" style="color:var(--accent);font-weight:400">${c}</span></h2></div>
+     <div><p class="lbl">4 yazılışı (sağdan sola)</p><div class="forms4">${form4(c).map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
+     <div><p class="lbl">Be harfiyle birleşince</p><div class="join">${j.map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
+     ${notes.length?`<ul class="rules">${notes.map(n=>`<li>${n}</li>`).join("")}</ul>`:""}
+   </div>
+   <button class="btn pri" id="shapeTest">Şekil testi: "Bu şekil hangi harf?"</button>
+   <div class="quiz" id="sq" hidden></div>`;
+  box.querySelectorAll(".lchips button").forEach(b=>b.onclick=()=>{shapeSel=b.dataset.c;renderShapes(box)});
+  box.querySelector("#shapeTest").onclick=()=>startShapeTest(box);
+}
+function startShapeTest(box){
+  const el=box.querySelector("#sq");el.hidden=false;box.querySelector("#shapeTest").hidden=true;
+  const pool=ALLC.filter(c=>c!=="لا");const qs=[];
+  const letters=shuffle(pool.slice()).slice(0,10);
+  letters.forEach(c=>{
+    const joins=!byChar[c][5];
+    const pos=joins?["başta","ortada","sonda"][Math.random()*3|0]:["ortada","sonda"][Math.random()*2|0];
+    let near=groupOf(c).filter(o=>o!=="لا");
+    if(pos!=="sonda"&&TEETH.includes(c)) near=near.concat(TEETH.split(""));
+    if(pos!=="sonda"&&"فق".includes(c)) near=near.concat(["ف","ق"]);
+    if(c==="ل") near=near.concat(["ا","ك"]);
+    if(c==="ا") near=near.concat(["ل"]);
+    const f=posForm(c,pos);
+    qs.push({ask:"Bu şekil hangi harf?",show:f,sub:`kelimenin ${pos==="başta"?"başında":pos==="ortada"?"ortasında":"sonunda"}`,ans:c,key:f,
+      opts:optList(c,near,pool,4).map(o=>[o,byChar[o][1]]),fbOk:`${f} = ${byChar[c][1]} (${c}), ${pos} yazılışı`});
+  });
+  el.scrollIntoView({block:"start"});
+  miniQuiz(el,qs,{retry:false,onDone:(s,t,m)=>{
+    el.innerHTML=`<div class="stars">${s>=9?"★★★":s>=6?"★★☆":"★☆☆"}</div><div class="score">${s} / ${t}</div>
+     ${m.length?`<p style="margin:0;color:var(--muted)">Karıştırdığın şekiller:</p><div class="ar" style="font-size:2.4rem;line-height:1.8">${m.join("   ")}</div>`:"<p style=\"margin:0\">Hepsi doğru, harika!</p>"}
+     <button class="btn pri" id="sAgain" style="width:100%">Yeni şekil testi</button>`;
+    el.querySelector("#sAgain").onclick=()=>startShapeTest(box);
+  }});
+}
+
+// ===== EZBER =====
+const ALIAS={"ا":["elif"],"ب":["be"],"ت":["te"],"ث":["se","peltekse"],"ج":["cim"],"ح":["ha"],"خ":["hı"],"د":["dal"],"ذ":["zel"],"ر":["ra","re"],"ز":["ze","zey"],
+ "س":["sin"],"ش":["şın","şin","shin"],"ص":["sad","sat"],"ض":["dad","dat"],"ط":["tı","ta"],"ظ":["zı","za"],"ع":["ayn","ayın","ain"],"غ":["gayn","gayın","ğayn","ghayn"],
+ "ف":["fe"],"ق":["kaf","qaf"],"ك":["kef"],"ل":["lam"],"م":["mim"],"ن":["nun"],"و":["vav","waw"],"ه":["he"],"لا":["lamelif","lamalif"],"ي":["ye","ya"]};
+const normName=s=>s.toLocaleLowerCase("tr").replace(/[âàá]/g,"a").replace(/[îí]/g,"i").replace(/[ûú]/g,"u").replace(/ı/g,"i").replace(/[\s\-'’`.]/g,"");
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+function nameMatch(t,c){
+  const n=normName(t);
+  for(const [k,v] of Object.entries(ALIAS)) if(v.some(a=>normName(a)===n)) return {letter:k,typo:false};
+  if(n.length>=3){const near=Object.entries(ALIAS).filter(([k,v])=>v.some(a=>lev(normName(a),n)<=1)).map(([k])=>k);
+    if(near.length===1&&near[0]===c) return {letter:c,typo:true};}
+  return {letter:null,typo:false};
+}
+let ezSel=new Set(),ezTarget=3,ezType="mix",ezAns="sec",ez=null,ezView=null;
+try{const s=JSON.parse(localStorage.getItem("elifba-ezber")||"null");if(s){ezSel=new Set(s.sel||[]);ezTarget=s.target||3;ezType=s.type||"mix";ezAns=s.ans||"sec";ez=s.session||null}}catch(e){}
+function saveEz(){try{localStorage.setItem("elifba-ezber",JSON.stringify({sel:[...ezSel],target:ezTarget,type:ezType,ans:ezAns,session:ez}))}catch(e){}}
+const ezMastered=e=>e.letters.filter(c=>(e.st[c]||0)>=e.target).length;
+function ezNewSession(letters){
+  ez={letters:order.filter(c=>letters.includes(c)),st:{},ms:{},asked:0,right:0,last:null,target:ezTarget,type:ezType,ans:ezAns,finished:false};
+  ezView="run";saveEz();renderEzber(document.getElementById("learnBody"));document.querySelector("main").scrollTop=0;
+}
+function renderEzber(box){
+  if(ezView===null) ezView=(ez&&!ez.finished)?"run":"pick";
+  if(ezView==="run"&&ez) return ez.finished?ezFinish(box):ezRun(box);
+  ezPick(box);
+}
+function ezPick(box){
+  document.getElementById("learnSeg").hidden=false;
+  const n=ezSel.size,known=order.filter(c=>done.has(c));
+  box.innerHTML=`<div class="intro">Bildiğin ya da ezberlemek istediğin harfleri <b>seç</b>. Test, seçtiğin her harfi <b>arka arkaya ${ezTarget} kez</b> doğru bilene kadar sürer. Yanlış yaptığın harfin sayacı sıfırlanır ve o harf daha sık gelir.</div>
+   ${ez&&!ez.finished?`<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">Yarım kalan ezber: <b>${ezMastered(ez)} / ${ez.letters.length}</b> harf ezberlendi.</span><button class="btn sm pri" id="ezResume">Devam et</button></div>`:""}
+   <div class="quick">
+     <button class="btn sm" id="ezKnown" ${known.length?"":"disabled"}>Öğrendiklerim (${known.length})</button>
+     <button class="btn sm" id="ezAll">Tümü</button>
+     <button class="btn sm" id="ezNone">Temizle</button>
+   </div>
+   <div class="pick">${order.map(c=>`<button data-c="${c}" class="${ezSel.has(c)?"sel":""}"><span class="ar">${c}</span><small>${byChar[c][1]}</small></button>`).join("")}</div>
+   <div><p class="lbl">Kaç kez arka arkaya doğru bilinsin?</p><div class="seg s3">${[2,3,5].map(t=>`<button data-tg="${t}" class="${t===ezTarget?"sel":""}">${t} kez</button>`).join("")}</div></div>
+   <div><p class="lbl">Soru türü</p><div class="seg s3">${[["isim","Harf → adı"],["harf","Adı → harf"],["mix","Karışık"]].map(([k,t])=>`<button data-ty="${k}" class="${k===ezType?"sel":""}">${t}</button>`).join("")}</div></div>
+   <div><p class="lbl">Cevap şekli</p><div class="seg">${[["sec","Seçerek"],["yaz","Yazarak"]].map(([k,t])=>`<button data-an="${k}" class="${k===ezAns?"sel":""}">${t}</button>`).join("")}</div>
+     <p class="hint2">${ezAns==="yaz"?"Harfi görünce <b>adını klavyeyle yazarsın</b>. Adı görünce harfi seçeneksiz, <b>Arapça klavyeden</b> bulursun. Daha zor ama ezberi daha iyi oturtur.":"Her soruda 4 seçenek çıkar, doğrusuna dokunursun."}</p></div>
+   <button class="btn pri" id="ezStart" ${n<2?"disabled":""}>${n<2?"En az 2 harf seç":`Başla · ${n} harf`}</button>`;
+  const re=()=>{saveEz();ezPick(box)};
+  box.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{const c=b.dataset.c;ezSel.has(c)?ezSel.delete(c):ezSel.add(c);re()});
+  box.querySelector("#ezKnown").onclick=()=>{ezSel=new Set(known);re()};
+  box.querySelector("#ezAll").onclick=()=>{ezSel=new Set(order);re()};
+  box.querySelector("#ezNone").onclick=()=>{ezSel=new Set();re()};
+  box.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{ezTarget=+b.dataset.tg;re()});
+  box.querySelectorAll("[data-ty]").forEach(b=>b.onclick=()=>{ezType=b.dataset.ty;re()});
+  box.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{ezAns=b.dataset.an;re()});
+  const r=box.querySelector("#ezResume");if(r)r.onclick=()=>{ezView="run";renderEzber(box);document.querySelector("main").scrollTop=0};
+  box.querySelector("#ezStart").onclick=()=>ezNewSession([...ezSel]);
+}
+function ezStrip(e){
+  return `<div class="ezstrip">${e.letters.map(o=>{const s=Math.min(e.st[o]||0,e.target);
+    return `<div class="ezc ${s>=e.target?"m":""}"><span class="ar">${o}</span><span class="pips">${Array.from({length:e.target},(_,k)=>`<i class="${k<s?"f":""}"></i>`).join("")}</span></div>`}).join("")}</div>`;
+}
+let ezTimer=null,ezCur=null,ezMaxH=0;
+function ezKbCheck(){
+  const vv=window.visualViewport,hh=vv?vv.height:window.innerHeight;
+  ezMaxH=Math.max(ezMaxH,window.innerHeight,hh);
+  const inp=document.getElementById("ezIn");
+  const open=hh<ezMaxH*0.8&&inp&&document.activeElement===inp;
+  document.body.classList.toggle("typing",!!open);
+  // iPhone: klavye sayfayı küçültmez, görünen alana sığdır ve kaydırmayı sıfırla
+  document.body.style.height=open&&vv&&hh<window.innerHeight-1?hh+"px":"";
+  if(open){document.querySelector("main").scrollTop=0;if(window.scrollY)window.scrollTo(0,0)}
+}
+window.addEventListener("resize",ezKbCheck);
+if(window.visualViewport){visualViewport.addEventListener("resize",ezKbCheck);visualViewport.addEventListener("scroll",()=>{if(document.body.classList.contains("typing")&&window.scrollY)window.scrollTo(0,0)})}
+function ezLeave(){clearTimeout(ezTimer);document.body.classList.remove("typing");document.body.style.height=""}
+function ezBuildShell(box){
+  box.innerHTML=`<div class="ltop"><button class="btn sm" id="ezBack">‹ Seçim</button><span style="flex:1" id="ezCount"></span><span id="ezScore" style="font-variant-numeric:tabular-nums"></span></div>
+   <div class="bar ezbar" style="height:8px;margin:0"><i id="ezBar"></i></div>
+   <div class="ezstrip"></div>
+   <div class="quiz ezq" id="ezCard">
+     <div class="qhead"><p class="qask" id="ezAsk"></p><button class="btn sm" id="ezSkip" type="button" hidden>Bilmiyorum</button></div>
+     <div id="ezShow"></div>
+     <div class="opts" id="ezOpts" hidden></div>
+     <div class="typein" id="ezType" hidden><input id="ezIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Harfin adını yaz"><button class="btn pri" id="ezCheck" type="button">Kontrol</button></div>
+     <div class="kb" id="ezKb" hidden>${L.map(x=>`<button data-v="${x[0]}">${x[0]}</button>`).join("")}</div>
+     <div class="fb" aria-live="polite"></div>
+   </div>`;
+  const inp=box.querySelector("#ezIn");
+  const keepFocus=el=>{["pointerdown","mousedown"].forEach(t=>el.addEventListener(t,ev=>{if(!box.querySelector("#ezType").hidden)ev.preventDefault()}))};
+  keepFocus(box.querySelector("#ezCheck"));keepFocus(box.querySelector("#ezSkip"));
+  const nextNow=()=>{clearTimeout(ezTimer);if(learnView==="ezber"&&ezView==="run")ezRun(box)};
+  function submit(){
+    if(!ezCur)return;
+    if(ezCur.answered)return nextNow();
+    const t=inp.value.trim();if(!t){inp.focus();return}
+    const r=nameMatch(t,ezCur.c);ezJudge(box,r.letter,t,null,r.typo);
+  }
+  box.querySelector("#ezBack").onclick=()=>{ezLeave();ezView="pick";renderEzber(box)};
+  box.querySelector("#ezCheck").onclick=()=>{submit();inp.focus()};
+  inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.keyCode===13){ev.preventDefault();submit()}});
+  inp.addEventListener("beforeinput",ev=>{if(ezCur&&ezCur.answered)ev.preventDefault()});
+  inp.addEventListener("focus",()=>setTimeout(ezKbCheck,300));
+  inp.addEventListener("blur",()=>{document.body.classList.remove("typing");document.body.style.height=""});
+  box.querySelector("#ezSkip").onclick=()=>{if(ezCur.answered)nextNow();else ezJudge(box,null,null,null);if(ezCur.mode==="type")inp.focus()};
+  box.querySelector("#ezOpts").onclick=ev=>{const b=ev.target.closest("button");if(b&&!b.disabled)ezJudge(box,b.dataset.v,null,b)};
+  box.querySelector("#ezKb").onclick=ev=>{const b=ev.target.closest("button");if(b&&!b.disabled)ezJudge(box,b.dataset.v,null,b)};
+}
+function ezRun(box){
+  clearTimeout(ezTimer);
+  document.getElementById("learnSeg").hidden=true;
+  const e=ez;
+  const left=e.letters.filter(c=>(e.st[c]||0)<e.target);
+  if(!left.length){ezLeave();e.finished=true;e.letters.forEach(c=>done.add(c));save();prog();renderGroups();saveEz();return ezFinish(box)}
+  const cand=left.length>1?left.filter(c=>c!==e.last):left;
+  const w=cand.map(c=>1+(e.target-(e.st[c]||0))+(e.ms[c]||0)*0.7);
+  let r=Math.random()*w.reduce((a,b)=>a+b,0),c=cand[cand.length-1];
+  for(let k=0;k<cand.length;k++){r-=w[k];if(r<=0){c=cand[k];break}}
+  e.last=c;saveEz();
+  const type=e.type==="mix"?(Math.random()<.5?"isim":"harf"):e.type;
+  const ans=e.ans||"sec",mode=ans==="sec"?"opts":(type==="isim"?"type":"kb");
+  if(!box.querySelector("#ezCard")) ezBuildShell(box);
+  ezCur={c,type,mode,answered:false,e};
+  ezUpdateHead(box,e);
+  const yaz=ans==="yaz";
+  box.querySelector("#ezAsk").textContent=type==="isim"?(yaz?"Bu harfin adını yaz":"Bu harf nedir?"):(yaz?"Bu harfi klavyeden bul":"Hangisi bu harf?");
+  box.querySelector("#ezShow").innerHTML=type==="isim"?`<div class="qglyph ar">${c}</div>`:`<div class="qname">${byChar[c][1]}</div>`;
+  const O=box.querySelector("#ezOpts");O.hidden=mode!=="opts";
+  if(mode==="opts"){
+    const look=groupOf(c).filter(o=>o!==c);
+    if(TEETH.includes(c)) TEETH.split("").forEach(o=>{if(o!==c&&!look.includes(o))look.push(o)});
+    const out=[c];
+    for(const o of shuffle(look)) if(out.length<3&&!out.includes(o)) out.push(o);
+    for(const o of shuffle(e.letters.slice())) if(out.length<4&&!out.includes(o)) out.push(o);
+    for(const o of shuffle(ALLC.slice())) if(out.length<4&&!out.includes(o)) out.push(o);
+    O.className="opts"+(type==="harf"?" glyphs":"");
+    O.innerHTML=shuffle(out).map(o=>`<button data-v="${o}">${type==="isim"?byChar[o][1]:o}</button>`).join("");
+  }
+  const K=box.querySelector("#ezKb");K.hidden=mode!=="kb";
+  K.querySelectorAll("button").forEach(b=>{b.disabled=false;b.className=""});
+  const T=box.querySelector("#ezType"),inp=box.querySelector("#ezIn");T.hidden=mode!=="type";
+  inp.value="";inp.className="";
+  box.querySelector("#ezCheck").disabled=false;
+  box.querySelector("#ezSkip").hidden=!yaz;
+  box.querySelector("#ezCard").classList.toggle("yaz",yaz);
+  box.querySelector(".fb").innerHTML="";
+  if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}
+  else if(document.activeElement===inp)inp.blur();
+}
+function ezUpdateHead(box,e){
+  const m=ezMastered(e),n=e.letters.length;
+  box.querySelector("#ezCount").innerHTML=`Ezberlenen <b>${m} / ${n}</b>`;
+  box.querySelector("#ezScore").textContent=`${e.right} / ${e.asked} doğru`;
+  box.querySelector("#ezBar").style.width=(m/n*100)+"%";
+  const s=box.querySelector(".ezstrip");s.outerHTML=ezStrip(e);
+  const f=box.querySelector(".ezstrip .ezc:not(.m)");if(f){try{f.scrollIntoView({inline:"nearest",block:"nearest"})}catch(_){}}
+}
+function ezJudge(box,o,typed,btn,typo){
+  const Z=ezCur;if(!Z||Z.answered)return;Z.answered=true;
+  const e=Z.e,c=Z.c,ok=o===c;
+  box.querySelectorAll("#ezOpts button,#ezKb button").forEach(x=>{x.disabled=true;if(x.dataset.v===c)x.classList.add("ok","pop")});
+  if(btn&&!ok)btn.classList.add("no");
+  if(Z.mode==="type")box.querySelector("#ezIn").className=ok?"ok":"no";
+  e.asked++;
+  const fb=box.querySelector(".fb"),hint=Z.mode==="type"?" · Devam için Enter":"";
+  if(ok){e.right++;e.st[c]=(e.st[c]||0)+1;buzz(25);const s=e.st[c];fb.style.color="var(--good)";
+    const extra=typo?` · Doğru yazılışı: <b>${byChar[c][1]}</b>`:"";
+    fb.innerHTML=s>=e.target?`✓ Doğru! ${byChar[c][1]} ezberlendi.<small>${c} artık sorulmayacak.${extra}</small>`:`✓ Doğru!<small>${c} = ${byChar[c][1]} · ${s} / ${e.target}${extra}</small>`}
+  else{e.st[c]=0;e.ms[c]=(e.ms[c]||0)+1;buzz([60,60,60]);fb.style.color="var(--bad)";
+    const what=o?`${typed!=null?"Yazdığın":"Seçtiğin"}: ${byChar[o][1]} <span class="ar" style="font-size:1.2rem">${o}</span> · `:(typed?`Yazdığın: "${typed.replace(/[<>&"]/g,"")}" · `:"");
+    fb.innerHTML=`${o||typed?"✗ Yanlış.":"Cevap:"} ${byChar[c][1]} <span class="ar" style="font-size:1.6rem">${c}</span><small>${what}${FARK[c]}<br>Sayaç sıfırlandı, bu harf yine gelecek.${hint}</small>`}
+  saveEz();
+  ezUpdateHead(box,e);
+  ezTimer=setTimeout(()=>{if(learnView==="ezber"&&ezView==="run"&&ez===e)ezRun(box)},ok?(typo?1800:900):2600);
+}
+function ezFinish(box){
+  document.getElementById("learnSeg").hidden=true;
+  const e=ez,acc=e.asked?Math.round(e.right/e.asked*100):0;
+  const hard=e.letters.filter(c=>e.ms[c]).sort((a,b)=>e.ms[b]-e.ms[a]);
+  box.innerHTML=`<div class="quiz">
+    <div class="stars">${acc>=90?"★★★":acc>=70?"★★☆":"★☆☆"}</div>
+    <h2 style="margin:0">Hepsini ezberledin!</h2>
+    <p style="margin:0">${e.letters.length} harf · ${e.asked} soru · %${acc} doğru</p>
+    <div class="ar" style="font-size:2.2rem;line-height:1.8;color:var(--accent)">${e.letters.join(" ")}</div>
+    ${hard.length?`<p class="lbl" style="margin:0">En çok zorlandıkların</p><div class="ezstrip wrap" style="justify-content:center">${hard.slice(0,10).map(c=>`<div class="ezc"><span class="ar">${c}</span><small style="font-size:.7rem;color:var(--muted)">${e.ms[c]} hata</small></div>`).join("")}</div>`:`<p style="margin:0">Hiç hata yapmadın!</p>`}
+    ${hard.length>=2?`<button class="btn pri" id="ezHard" style="width:100%">Zorlandıklarımla tekrar (${hard.length} harf)</button>`:""}
+    <button class="btn ${hard.length>=2?"":"pri"}" id="ezSame" style="width:100%">Aynı harflerle tekrar</button>
+    <button class="btn" id="ezNew" style="width:100%">Yeni seçim yap</button>
+  </div>`;
+  const h=box.querySelector("#ezHard");if(h)h.onclick=()=>{ezSel=new Set(hard);ezNewSession(hard)};
+  box.querySelector("#ezSame").onclick=()=>ezNewSession(e.letters);
+  box.querySelector("#ezNew").onclick=()=>{ezView="pick";renderEzber(box)};
+}
+
+renderGroups();renderHk();renderRules();prog();renderLearn();
+</script>
+<script>
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
