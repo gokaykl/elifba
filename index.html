@@ -41,7 +41,7 @@ header h1 .ar{color:var(--accent);margin-left:6px}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
 .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
 main{flex:1;overflow-y:auto;padding:4px 16px 24px}
-nav{padding-bottom:env(safe-area-inset-bottom,0px);display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--surface)}
+nav{padding-bottom:env(safe-area-inset-bottom,0px);display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface)}
 nav button{font:inherit;font-size:.82rem;font-weight:500;background:none;border:0;color:var(--muted);padding:8px 2px 12px;display:flex;flex-direction:column;align-items:center;gap:0}
 nav button .ar{font-size:1.5rem;line-height:1.5}
 nav button[aria-selected="true"]{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
@@ -210,6 +210,24 @@ body.typing header,body.typing nav,body.typing .ezbar{display:none}
 body.typing main{padding-top:8px}
 body.typing .ezq{padding:10px 12px;gap:6px}
 body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
+.part{margin:6px 0 -6px;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.qword{font-size:3.4rem;line-height:1.9;color:var(--accent)}
+.chunks{display:flex;gap:6px;justify-content:center;direction:rtl;flex-wrap:wrap}
+.chunks span{direction:ltr;display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:10px;padding:0 10px 4px;min-width:54px;background:var(--bg)}
+.chunks .ar{font-size:2rem;line-height:1.8;font-weight:400}
+.chunks small{font-weight:700;min-height:1.3em;color:var(--muted)}
+.chunks span.cur{border:2px solid var(--accent);background:var(--accent-soft)}
+.chunks span.cur small{color:var(--accent)}
+.chunks span.ok small{color:var(--good)}
+.syl.s3c{grid-template-columns:repeat(3,1fr)}
+.wgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;direction:rtl}
+.wcard{direction:ltr;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.wcard .ar{font-size:2.3rem;line-height:1.9}
+.wcard b{color:var(--accent);visibility:hidden}
+.wcard small{color:var(--muted);font-size:.8rem;visibility:hidden;min-height:1.2em}
+.wcard.show{border-color:var(--accent)}
+.wcard.show b,.wcard.show small{visibility:visible}
+.note .ar{font-size:1.35rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pop{animation:pop .25s ease}
@@ -236,17 +254,19 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
     <div id="groups" style="display:flex;flex-direction:column;gap:18px"></div>
   </section>
 
-  <section id="hareke" hidden>
+  <section id="kural" hidden>
+    <div class="seg" id="kSeg"><button data-kv="hk" class="sel">Harekeler</button><button data-kv="kr">Okuma kuralları</button></div>
+    <div id="kHk" style="display:flex;flex-direction:column;gap:18px">
     <div class="intro">Harf tek başına sadece bir ünsüzdür (b, t, s…). Üstüne veya altına konan <b>hareke</b> ona sesli harfi verir. Bir hareke seç, bütün harflerde nasıl okunduğuna bak.</div>
     <div class="chips" id="hkChips"></div>
     <div class="explain" id="hkExplain"></div>
     <button class="btn" id="hideBtn">Okunuşları gizle, kendimi deneyeyim</button>
     <div class="syl" id="sylGrid"></div>
-  </section>
-
-  <section id="kural" hidden>
+    </div>
+    <div id="kRules" hidden style="display:flex;flex-direction:column;gap:18px">
     <div class="intro">Elif-Ba'nın temel okuma kuralları, sırayla. Her kuralın altında örnekler var: önce kendin oku, sonra altındaki okunuşla karşılaştır.</div>
     <div id="rules" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
   </section>
 
   <section id="test" hidden>
@@ -267,7 +287,6 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 <nav role="tablist">
   <button role="tab" data-t="ogren" aria-selected="true"><span class="ar">أ</span>Öğren</button>
   <button role="tab" data-t="harf" aria-selected="false"><span class="ar">ا ب</span>Harfler</button>
-  <button role="tab" data-t="hareke" aria-selected="false"><span class="ar">بَ بِ</span>Harekeler</button>
   <button role="tab" data-t="kural" aria-selected="false"><span class="ar">بّ</span>Kurallar</button>
   <button role="tab" data-t="test" aria-selected="false"><span class="ar">؟</span>Test</button>
 </nav>
@@ -638,7 +657,7 @@ function miniQuiz(el,qs,opt){
     const Z=queue.shift();
     el.innerHTML=`<div class="qstat"><span>${opt.retry?`Kalan soru: ${queue.length+1}`:`Soru ${n+1} / ${total}`}</span><span>Doğru: ${score}</span></div>
      <p class="qask">${Z.ask}</p>
-     ${Z.name?`<div class="qname">${Z.name}</div>`:`<div class="qglyph ar">${Z.show}</div>`}
+     ${Z.html?Z.html:Z.name?`<div class="qname">${Z.name}</div>`:`<div class="qglyph ar">${Z.show}</div>`}
      ${Z.sub?`<p class="qpos">${Z.sub}</p>`:""}
      <div class="opts ${Z.glyphs?"glyphs":""}"></div><div class="fb" aria-live="polite"></div>`;
     const O=el.querySelector(".opts");
@@ -667,13 +686,22 @@ function renderLearn(){
 document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{if(typeof ezLeave==="function")ezLeave();learnView=b.dataset.lv;renderLearn()});
 
 function renderLessonList(box){
-  const next=G.findIndex((g,i)=>!lessonsDone.has(i));
-  box.innerHTML=`<div class="intro">Harfleri <b>12 kısa derste</b> öğren. Her derste birbirine benzeyen harflerle tek tek tanışırsın, sonra küçük bir alıştırma yaparsın. Yanlış yaptığın soru tekrar gelir. <b>${lessonsDone.size} / 12</b> ders tamamlandı.</div>
-   <div class="path">${G.map((g,i)=>`<button class="lesson ${lessonsDone.has(i)?"ok":""} ${i===next?"next":""}" data-i="${i}">
-     <span class="ln">${lessonsDone.has(i)?"✓":i+1}</span>
-     <span class="lt"><b>${g[0]}</b><small>${i===next?"Sıradaki ders · ":""}${g[2].map(c=>byChar[c][1]).join(", ")}</small></span>
-     <span class="ar lg">${g[2].join(" ")}</span></button>`).join("")}</div>`;
-  box.querySelectorAll(".lesson").forEach(b=>b.onclick=()=>startLesson(+b.dataset.i));
+  const next=LESSON_SEQ.find(id=>!lessonsDone.has(id));
+  const doneN=LESSON_SEQ.filter(id=>lessonsDone.has(id)).length;
+  const title=id=>typeof id==="number"?`${id+1}. ders · ${G[id][0]}`:`${13+ +id.slice(1)}. ders · ${RL[+id.slice(1)].t}`;
+  const item=(id,num,t,sub,ar)=>`<button class="lesson ${lessonsDone.has(id)?"ok":""} ${id===next?"next":""}" data-id="${id}">
+     <span class="ln">${lessonsDone.has(id)?"✓":num}</span>
+     <span class="lt"><b>${t}</b><small>${id===next?"Sıradaki ders · ":""}${sub}</small></span>
+     <span class="ar lg">${ar}</span></button>`;
+  box.innerHTML=`<div class="intro">Önce harfleri <b>12 derste</b>, sonra okumayı <b>10 derste</b> öğren. Her ders kısa: önce tanış, sonra alıştırma. Yanlış yaptığın soru tekrar gelir. <b>${doneN} / ${LESSON_SEQ.length}</b> ders tamamlandı.</div>
+   ${next!==undefined&&doneN>0?`<button class="btn pri" id="cont">Devam et: ${title(next)} ›</button>`:""}
+   <h3 class="part">1. Bölüm · Harfler</h3>
+   <div class="path">${G.map((g,i)=>item(i,i+1,g[0],g[2].map(c=>byChar[c][1]).join(", "),g[2].join(" "))).join("")}</div>
+   <h3 class="part">2. Bölüm · Okuma</h3>
+   <div class="path">${RL.map((r,j)=>item("r"+j,13+j,r.t,r.sub,r.ar)).join("")}</div>`;
+  const open=id=>typeof id==="number"?startLesson(id):startReadLesson(+id.slice(1));
+  box.querySelectorAll(".lesson").forEach(b=>b.onclick=()=>{const id=b.dataset.id;open(id[0]==="r"?id:+id)});
+  const c=box.querySelector("#cont");if(c)c.onclick=()=>open(next);
 }
 
 function startLesson(i){
@@ -720,11 +748,12 @@ function startLesson(i){
       <p style="margin:0">İlk denemede <b>${s} / ${t}</b> doğru.</p>
       <div class="ar" style="font-size:3rem;line-height:1.7;color:var(--accent)">${cs.join("  ")}</div>
       <p style="margin:0;color:var(--muted)">Bu harfler "öğrendim" olarak işaretlendi.</p>
-      ${nx>=0?`<button class="btn pri" id="nx" style="width:100%">Sonraki ders: ${G[nx][0]} ›</button>`:`<p style="margin:0"><b>Tüm harfleri bitirdin!</b> Şimdi "Yazılış" ve "Ezber" bölümlerine geç.</p>`}
+      ${nx>=0?`<button class="btn pri" id="nx" style="width:100%">Sonraki ders: ${G[nx][0]} ›</button>`:`<p style="margin:0"><b>Tüm harfleri bitirdin!</b> Sırada okuma dersleri var.</p><button class="btn pri" id="nxr" style="width:100%">13. ders: Üstün ile hece ›</button>`}
       <button class="btn" id="again" style="width:100%">Bu dersi tekrar et</button>
       <button class="btn" id="list" style="width:100%">Ders listesine dön</button></div>`;
     bindBack();
     const n=box.querySelector("#nx");if(n)n.onclick=()=>startLesson(nx);
+    const nr=box.querySelector("#nxr");if(nr)nr.onclick=()=>startReadLesson(0);
     box.querySelector("#again").onclick=()=>startLesson(i);
     box.querySelector("#list").onclick=renderLearn;
   }
@@ -972,6 +1001,241 @@ function ezFinish(box){
   box.querySelector("#ezNew").onclick=()=>{ezView="pick";renderEzber(box)};
 }
 
+// ===== OKUMA (hece / kelime) =====
+const MARKS={"َ":"a","ِ":"i","ُ":"u","ً":"an","ٍ":"in","ٌ":"un","ْ":"s","ّ":"sh"};
+const HEMZE="أإآءؤئ";
+const LONGV={"a":"â","e":"â","i":"î","ı":"î","u":"û","ü":"û"};
+function tokenize(w){
+  const t=[];
+  for(const ch of w){
+    if(MARKS[ch]){if(t.length)t[t.length-1].m.push(MARKS[ch]);continue}
+    if(ch==="ٰ"){if(t.length)t[t.length-1].m.push("dagger");continue}
+    t.push({ch,m:[]});
+  }
+  return t;
+}
+function consOf(ch){
+  if(HEMZE.includes(ch)||ch==="ا") return "";
+  if(ch==="ة") return "t";
+  if(ch==="ى") return "";
+  const x=byChar[ch];return x?x[3]:"";
+}
+function vowelOf(ch,h){
+  if(HEMZE.includes(ch)||ch==="ا"||ch==="ة") return {a:"e",i:"i",u:"ü"}[h];
+  return vowel(ch,h);
+}
+// Harekeli kelimeyi hecelere ayırır: [{r:"ke",a:"كَ"}, ...]
+function syllables(w){
+  const S=[];let tanwinA=false;
+  for(const t of tokenize(w)){
+    const last=S[S.length-1];
+    const v=t.m.find(m=>["a","i","u","an","in","un"].includes(m));
+    const sh=t.m.includes("sh"),su=t.m.includes("s");
+    const c=consOf(t.ch);
+    if(!v&&!sh&&!su&&last){
+      const lv=last.r.slice(-1);
+      if(t.ch==="ا"&&tanwinA){last.a+=t.ch;tanwinA=false;continue}                       // tenvinden sonra elif okunmaz
+      if((t.ch==="ا"||t.ch==="ى")&&(lv==="a"||lv==="e")){last.r=last.r.slice(0,-1)+"â";last.a+=t.ch;continue}
+      if(t.ch==="ي"&&(lv==="i"||lv==="ı")){last.r=last.r.slice(0,-1)+"î";last.a+=t.ch;continue}
+      if(t.ch==="و"&&(lv==="u"||lv==="ü")){last.r=last.r.slice(0,-1)+"û";last.a+=t.ch;continue}
+    }
+    if(t.ch==="آ"){S.push({r:"â",a:t.ch});continue}
+    if(t.m.includes("dagger")&&!v){S.push({r:c+"â",a:t.ch+"ٰ"});continue}
+    tanwinA=false;
+    const mk=t.ch+t.m.map(m=>Object.keys(MARKS).find(k=>MARKS[k]===m)||"").join("");
+    if(sh&&v&&last){
+      last.r+=c;
+      const base=v.replace("n","");
+      S.push({r:c+vowelOf(t.ch,base)+(v.length>1?"n":""),a:mk});
+      if(v==="an")tanwinA=true;
+      continue;
+    }
+    if(v){
+      const base=v.replace("n","");
+      S.push({r:c+vowelOf(t.ch,base)+(v.length>1?"n":""),a:mk});
+      if(v==="an")tanwinA=true;
+      continue;
+    }
+    // cezmli ya da harekesiz ünsüz: önceki heceye eklenir
+    if(last){last.r+=c;last.a+=mk}else S.push({r:c,a:mk});
+  }
+  return S;
+}
+const readWord=w=>syllables(w).map(s=>s.r).join("-");
+
+// ---- yanlış seçenek üretimi ----
+const SWAP={e:"a",a:"e",i:"ı",ı:"i",ü:"u",u:"ü"};
+const ROT={e:["i","ü"],i:["e","ü"],ü:["e","i"],a:["ı","u"],ı:["a","u"],u:["a","ı"]};
+const firstV=s=>{const m=s.match(/[eaiıüu]/);return m?m.index:-1};
+function mutations(R,kind){
+  const out=[];const j=R.join("-");
+  const each=(fn)=>R.forEach((s,i)=>{const n=fn(s,i);if(n&&n!==s){const r=R.slice();r[i]=n;out.push(r.join("-"))}});
+  each(s=>{const k=firstV(s);return k<0?null:s.slice(0,k)+SWAP[s[k]]+s.slice(k+1)});              // kalın/ince
+  each(s=>{const k=firstV(s);return k<0?null:s.slice(0,k)+ROT[s[k]][0]+s.slice(k+1)});             // başka hareke
+  each(s=>{const k=firstV(s);return k<0?null:s.slice(0,k)+ROT[s[k]][1]+s.slice(k+1)});
+  if(kind!=="hece"){
+    each(s=>/[âîû]/.test(s)?s.replace("â","a").replace("î","i").replace("û","u"):null); // uzatmayı unutmak
+    each(s=>/[âîû]/.test(s)?s.replace("â","e").replace("î","ı").replace("û","ü"):null);
+    R.forEach((s,i)=>{ // şeddeyi unutmak: rab-bi -> ra-bi
+      if(i<R.length-1&&s.length>1&&R[i+1][0]===s.slice(-1)&&!/[eaiıüuâîû]/.test(s.slice(-1))){const r=R.slice();r[i]=s.slice(0,-1);out.push(r.join("-"))}});
+    if(/n$/.test(R[R.length-1])&&kind==="tenvin"){const r=R.slice();r[r.length-1]=r[r.length-1].slice(0,-1);out.push(r.join("-"))}
+    R.forEach((s,i)=>{ // cezmi okumak: min -> mi-ne
+      const m=s.match(/^(.*[eaiıüu])([bcdfğhjklmnprsştvyz‘])$/);
+      if(m&&!(i===R.length-1&&kind==="tenvin")){const r=R.slice();r.splice(i,1,m[1],m[2]+m[1].slice(-1));out.push(r.join("-"))}});
+  }
+  return [...new Set(out)].filter(x=>x!==j);
+}
+function readingOptions(w,kind){
+  const R=syllables(w).map(s=>s.r),ans=R.join("-");
+  const m=mutations(R,kind);
+  // derse özgü hatayı öne al
+  const opts=[ans];
+  const dbl=x=>/([bcdfğhjklmnprsştvyz])-\1/.test(x);
+  const want=kind==="sedde"?m.filter(x=>!dbl(x)&&x.split("-").length===R.length):kind==="uzatma"?m.filter(x=>!/[âîû]/.test(x)&&/[âîû]/.test(ans)):kind==="tenvin"?m.filter(x=>!/n$/.test(x)):kind==="cezm"?m.filter(x=>x.split("-").length>R.length):[];
+  for(const x of shuffle(want)) if(opts.length<2&&!opts.includes(x)) opts.push(x);
+  for(const x of shuffle(m)) if(opts.length<4&&!opts.includes(x)) opts.push(x);
+  return shuffle(opts);
+}
+
+// ===== 2. BÖLÜM: OKUMA DERSLERİ =====
+const HN={a:"üstün",i:"esre",u:"ötre"};
+const MIX=["ب","ت","ج","د","ر","س","ص","ط","ع","ق","ك","ل","م","ن"];
+const RL=[
+ {t:"Üstün ile hece",sub:"بَ be · صَ sa",ar:"بَ",kind:"hece",hv:["a"],ok:["a"],
+  rule:"Harfin <b>üstündeki eğik çizgi</b> üstündür. Harfe <b>e</b> sesi verir: بَ be, كَ ke.<br>Kalın harflerde <b>a</b> okunur: صَ sa, قَ ka. Kalın harfler: <span class=\"ar\">خ ص ض ط ظ غ ق</span>, ayrıca <span class=\"ar\">ح ع ر</span>.",
+  ex:["بَ","كَ","صَ","قَ"]},
+ {t:"Esre ile hece",sub:"بِ bi · صِ sı",ar:"بِ",kind:"hece",hv:["i"],ok:["a","i"],
+  rule:"Harfin <b>altındaki eğik çizgi</b> esredir. <b>i</b> sesi verir: بِ bi, سِ si.<br>Kalın harflerde <b>ı</b> okunur: صِ sı, قِ kı. Ra esrede incedir: رِ ri.",
+  ex:["بِ","سِ","صِ","رِ"]},
+ {t:"Ötre ile hece",sub:"بُ bü · صُ su",ar:"بُ",kind:"hece",hv:["u"],ok:["a","i","u"],
+  rule:"Harfin <b>üstündeki küçük vav</b> ötredir. <b>ü</b> sesi verir: بُ bü, نُ nü.<br>Kalın harflerde <b>u</b> okunur: صُ su, قُ ku, رُ ru.",
+  ex:["بُ","نُ","صُ","رُ"]},
+ {t:"Üç hareke bir arada",sub:"بَ بِ بُ",ar:"بِ",kind:"hece",hv:["a","i","u"],ok:["a","i","u"],
+  rule:"Aynı harf üç farklı şekilde okunur. Önce <b>işarete bak</b>:<br>üstte çizgi → <b>e / a</b>, altta çizgi → <b>i / ı</b>, üstte küçük vav → <b>ü / u</b>.",
+  ex:["بَ","بِ","بُ"]},
+ {t:"İlk kelimeler",sub:"كَتَبَ ke-te-be",ar:"كَتَبَ",kind:"kelime",
+  rule:"Harekeli harfler yan yana gelince her harf <b>bir hece</b> olur. <b>Sağdan</b> başla, harfleri tek tek oku, sonra birleştir: <span class=\"ar\">كَ تَ بَ</span> → ke-te-be.",
+  ex:["كَتَبَ","جَلَسَ","كُتُبُ"],
+  words:[["كَتَبَ","yazdı"],["ذَهَبَ","gitti"],["جَلَسَ","oturdu"],["نَزَلَ","indi"],["جَعَلَ","kıldı, yaptı"],["عَلِمَ","bildi"],["شَهِدَ","şahit oldu"],["سَمِعَ","işitti"],["كَفَرَ","inkâr etti"],["كُتُبُ","kitaplar"],["رُسُلُ","elçiler"]]},
+ {t:"Cezm",sub:"مِنْ min · قُلْ kul",ar:"بْ",kind:"cezm",
+  rule:"Harfin üstündeki <b>küçük halka</b> cezmdir. Bu harf sesli harf almaz, <b>önceki heceye eklenir</b>: <span class=\"ar\">مِنْ</span> mi + n → <b>min</b>.",
+  ex:["مِنْ","قُلْ","أَنْتَ"],
+  words:[["مِنْ","-den, -dan"],["قُلْ","de, söyle"],["لَمْ","-medi"],["هُمْ","onlar"],["كُنْ","ol"],["قُمْ","kalk"],["عَنْ","-den, hakkında"],["أَنْتَ","sen"],["يَكْتُبُ","yazar"],["يَلْعَبُ","oynar"]]},
+ {t:"Şedde",sub:"رَبِّ rab-bi",ar:"بّ",kind:"sedde",
+  rule:"Harfin üstündeki küçük <b>w</b> şeddedir. Harf <b>iki kez</b> okunur: biri önceki heceye eklenir, diğeri kendi harekesiyle okunur: <span class=\"ar\">رَبِّ</span> → <b>rab-bi</b>.",
+  ex:["رَبِّ","إِنَّ","ثُمَّ"],
+  words:[["رَبِّ","Rabbim"],["إِنَّ","muhakkak"],["ثُمَّ","sonra"],["كُلُّ","her, hepsi"],["شَدَّ","sıktı, bağladı"],["أُمَّ","anne"],["مُحَمَّدُ","Muhammed"]]},
+ {t:"Tenvin",sub:"قَلَمٌ ka-le-mün",ar:"بٌ",kind:"tenvin",
+  rule:"Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> ekler: <span class=\"ar\">بًا</span> ben, <span class=\"ar\">بٍ</span> bin, <span class=\"ar\">بٌ</span> bün.<br>Tenvin üstünden sonra yazılan elif <b>okunmaz</b>.",
+  ex:["قَلَمٌ","بَلَدًا","قَمَرٍ"],
+  words:[["قَلَمٌ","kalem"],["وَلَدٌ","çocuk"],["أَحَدٌ","bir, tek"],["بَلَدًا","şehir"],["قَمَرٍ","ay"],["شَجَرَةٌ","ağaç"],["رَجُلٌ","adam"],["سَمَكًا","balık"]]},
+ {t:"Uzatma (med)",sub:"قَالَ kâ-le",ar:"بَا",kind:"uzatma",
+  rule:"<b>Elif, vav, ye</b> harekesiz gelince önceki sesi uzatır:<br>üstün + elif → <b>â</b> (<span class=\"ar\">بَا</span> bâ), esre + ye → <b>î</b> (<span class=\"ar\">بِي</span> bî), ötre + vav → <b>û</b> (<span class=\"ar\">بُو</span> bû).",
+  ex:["قَالَ","قِيلَ","يَقُولُ"],
+  words:[["قَالَ","dedi"],["قِيلَ","denildi"],["يَقُولُ","der"],["نُورٌ","nur, ışık"],["دِينٌ","din"],["بَابٌ","kapı"],["كِتَابٌ","kitap"],["سُورَةٌ","sure"]]},
+ {t:"Karışık kelimeler",sub:"اَلْحَمْدُ el-ham-dü",ar:"اَلْحَمْدُ",kind:"karisik",
+  rule:"Öğrendiğin her şey bir arada. Acele etme: önce <b>işaretlere bak</b> (hareke, cezm, şedde, tenvin, uzatma), sonra <b>hece hece</b> oku.",
+  ex:["اَلْحَمْدُ","رَحْمَةٌ","جَنَّةٌ"],
+  words:[["اَلْحَمْدُ","hamd, övgü"],["رَحْمَةٌ","rahmet"],["غَفُورٌ","çok bağışlayan"],["عَلِيمٌ","her şeyi bilen"],["مُسْلِمٌ","Müslüman"],["جَنَّةٌ","cennet"],["صَلَاةٌ","namaz"],["نَارٌ","ateş"]]},
+];
+const LESSON_SEQ=[...G.map((g,i)=>i),...RL.map((r,j)=>"r"+j)];
+
+function heceQuestions(L2){
+  const letters=shuffle(LET.slice()).slice(0,10);
+  return letters.map(c=>{
+    const h=L2.hv[Math.random()*L2.hv.length|0],g=glyph(c,h),ans=read(c,h);
+    const cand=[ans.replace(/[eaiıüu]$/,m=>SWAP[m])];
+    shuffle(["a","i","u"].filter(o=>o!==h&&L2.ok.includes(o))).forEach(o=>cand.push(read(c,o)));
+    nearLetters(c).forEach(o=>cand.push(read(o,h)));
+    shuffle(LET.slice()).forEach(o=>cand.push(read(o,h)));
+    const opts=[ans];for(const x of cand) if(opts.length<4&&!opts.includes(x)) opts.push(x);
+    return {ask:"Bu nasıl okunur?",show:g,ans,key:g,opts:shuffle(opts).map(o=>[o,o]),
+      fbOk:`${byChar[c][1]} ${HN[h]} = <b>${ans}</b>${isThick(c)||(c==="ر"&&h!=="i")?" · kalın okunur":""}`};
+  });
+}
+function wordQuestion(w,mean,kind){
+  const ans=readWord(w);
+  return {ask:"Bu kelime nasıl okunur?",html:`<div class="qword ar">${w}</div>`,ans,key:w,
+    opts:readingOptions(w,kind).map(o=>[o,o]),fbOk:`${w} = <b>${ans}</b>${mean?" · "+mean:""}`};
+}
+function heceHece(w,mean){
+  const S=syllables(w),R=S.map(x=>x.r);
+  return S.map((s,i)=>{
+    const opts=[s.r,...shuffle(mutations([s.r],"hece"))].filter((x,k,a)=>a.indexOf(x)===k).slice(0,4);
+    const chunks=S.map((x,k)=>`<span class="${k===i?"cur":k<i?"ok":""}"><b class="ar">${x.a}</b><small>${k<i?x.r:k===i?"?":"&nbsp;"}</small></span>`).join("");
+    return {ask:`${i+1}. heceyi oku`,html:`<div class="qword ar">${w}</div><div class="chunks">${chunks}</div>`,ans:s.r,key:w,
+      opts:shuffle(opts).map(o=>[o,o]),fbOk:i===S.length-1?`${w} = <b>${R.join("-")}</b>${mean?" · "+mean:""}`:`<span class="ar">${s.a}</span> = <b>${s.r}</b>`};
+  });
+}
+function readQuiz(L2){
+  if(L2.kind==="hece") return heceQuestions(L2);
+  const ws=shuffle(L2.words.slice());
+  if(L2.kind==="kelime") return [...ws.slice(0,3).flatMap(([w,m])=>heceHece(w,m)),...ws.slice(3,6).map(([w,m])=>wordQuestion(w,m,"kelime"))];
+  return ws.slice(0,8).map(([w,m])=>wordQuestion(w,m,L2.kind));
+}
+
+function startReadLesson(j){
+  const L2=RL[j];let step=0;
+  const box=document.getElementById("learnBody");
+  document.getElementById("learnSeg").hidden=true;
+  const top=()=>`<div class="ltop"><button class="btn sm" id="back">‹ Dersler</button><span>${13+j}. ders · ${L2.t}</span></div>
+    <div class="dots">${[0,1,2].map(k=>`<i class="${k<step?"d":k===step?"c":""}"></i>`).join("")}</div>`;
+  const bindBack=()=>box.querySelector("#back").onclick=renderLearn;
+  function show(){
+    document.querySelector("main").scrollTop=0;
+    if(step===0){
+      box.innerHTML=top()+`<div class="meet">
+        <div class="head"><p class="lbl">1 · Kural</p><div class="mglyph ar" style="font-size:${L2.ar.length>4?"3.6rem":"5.5rem"}">${L2.ar}</div><h2>${L2.t}</h2></div>
+        <div class="note" style="font-size:1rem;line-height:1.7">${L2.rule}</div>
+        <div><p class="lbl">Örnekler</p><div class="ex">${L2.ex.map(w=>`<div><span class="ar">${w}</span><small>${readWord(w)}</small></div>`).join("")}</div></div>
+        <button class="btn pri" id="go">Anladım, okumaya geç ›</button></div>`;
+      bindBack();box.querySelector("#go").onclick=()=>{step=1;show()};
+    }else if(step===1){
+      const isH=L2.kind==="hece";
+      const items=isH?(L2.hv.length>1?MIX.flatMap(c=>["a","i","u"].map(h=>[glyph(c,h),read(c,h),""])):LET.map(c=>[glyph(c,L2.hv[0]),read(c,L2.hv[0]),""]))
+                     :L2.words.map(([w,m])=>[w,readWord(w),m]);
+      box.innerHTML=top()+`<div class="intro"><b>2 · Kendin oku.</b> Her karta önce kendin oku, sonra dokunup okunuşuna bak.</div>
+        ${isH?`<div class="syl hide ${L2.hv.length>1?"s3c":""}" id="rg">${items.map(([a,r])=>`<button><span class="ar">${a}</span><small>${r}</small></button>`).join("")}</div>`
+             :`<div class="wgrid" id="rg">${items.map(([a,r,m])=>`<button class="wcard"><span class="ar">${a}</span><b>${r}</b><small>${m}</small></button>`).join("")}</div>`}
+        <button class="btn" id="all">Hepsinin okunuşunu göster</button>
+        <button class="btn pri" id="go">Alıştırmaya geç ›</button>
+        <button class="btn" id="prev">‹ Kurala dön</button>`;
+      bindBack();
+      const rg=box.querySelector("#rg");
+      rg.querySelectorAll("button").forEach(b=>b.onclick=()=>b.classList.toggle("show"));
+      box.querySelector("#all").onclick=e=>{const on=e.target.dataset.on!=="1";e.target.dataset.on=on?"1":"0";
+        rg.querySelectorAll("button").forEach(b=>b.classList.toggle("show",on));e.target.textContent=on?"Okunuşları gizle":"Hepsinin okunuşunu göster"};
+      box.querySelector("#go").onclick=()=>{step=2;show()};
+      box.querySelector("#prev").onclick=()=>{step=0;show()};
+    }else{
+      box.innerHTML=top()+`<div class="quiz" id="lq"></div>`;bindBack();
+      miniQuiz(document.getElementById("lq"),readQuiz(L2),{retry:true,onDone:(s,t)=>finish(s,t)});
+    }
+  }
+  function finish(s,t){
+    step=3;lessonsDone.add("r"+j);saveLessons();
+    const nx=j+1<RL.length?j+1:-1,allDone=LESSON_SEQ.every(id=>lessonsDone.has(id));
+    box.innerHTML=top()+`<div class="quiz">
+      <div class="stars">${s===t?"★★★":s>=t*0.6?"★★☆":"★☆☆"}</div>
+      <h2 style="margin:0">${s===t?"Maşallah, ders tamamlandı!":"Ders tamamlandı!"}</h2>
+      <p style="margin:0">İlk denemede <b>${s} / ${t}</b> doğru.</p>
+      <div class="ar" style="font-size:2.6rem;line-height:1.8;color:var(--accent)">${L2.ar}</div>
+      ${allDone?`<p style="margin:0"><b>Elhamdülillah, bütün dersleri bitirdin!</b> Tekrar için Ezber ve Test bölümlerini kullanabilirsin.</p>`:""}
+      ${nx>=0?`<button class="btn pri" id="nx" style="width:100%">Sonraki ders: ${RL[nx].t} ›</button>`:""}
+      <button class="btn" id="again" style="width:100%">Bu dersi tekrar et</button>
+      <button class="btn" id="list" style="width:100%">Ders listesine dön</button></div>`;
+    bindBack();
+    const n=box.querySelector("#nx");if(n)n.onclick=()=>startReadLesson(nx);
+    box.querySelector("#again").onclick=()=>startReadLesson(j);
+    box.querySelector("#list").onclick=renderLearn;
+  }
+  show();
+}
+
+document.querySelectorAll("[data-kv]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-kv]").forEach(o=>o.classList.toggle("sel",o===b));
+  document.getElementById("kHk").hidden=b.dataset.kv!=="hk";document.getElementById("kRules").hidden=b.dataset.kv!=="kr";
+  document.querySelector("main").scrollTop=0});
 renderGroups();renderHk();renderRules();prog();renderLearn();
 </script>
 <script>
