@@ -291,6 +291,11 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .sgrp{margin:10px 0 2px}
 .wm{color:var(--muted);margin:0 .1em}
+.mixrow{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:8px}
+.mixrow>div:first-child{flex:1;display:flex;flex-direction:column;gap:2px;font-size:.9rem}
+.mixrow small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.seg.mixseg{flex:0 0 auto;grid-template-columns:1fr 1fr;padding:3px}
+.seg.mixseg button{padding:7px 12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pop{animation:pop .25s ease}
@@ -890,9 +895,9 @@ function nameMatch(t,c){
     if(near.length===1&&near[0]===c) return {letter:c,typo:true};}
   return {letter:null,typo:false};
 }
-let ezSel=new Set(),ezTarget=3,ezType="mix",ezAns="sec",ez=null,ezView=null;
-try{const s=JSON.parse(localStorage.getItem("elifba-ezber")||"null");if(s){ezSel=new Set(s.sel||[]);ezTarget=s.target||3;ezType=s.type||"mix";ezAns=s.ans||"sec";ez=s.session||null}}catch(e){}
-function saveEz(){try{localStorage.setItem("elifba-ezber",JSON.stringify({sel:[...ezSel],target:ezTarget,type:ezType,ans:ezAns,session:ez}))}catch(e){}}
+let ezSel=new Set(),ezTarget=3,ezType="mix",ezAns="sec",ezMix=true,ez=null,ezView=null;
+try{const s=JSON.parse(localStorage.getItem("elifba-ezber")||"null");if(s){ezSel=new Set(s.sel||[]);ezTarget=s.target||3;ezType=s.type||"mix";ezAns=s.ans||"sec";ezMix=s.mix!==false;ez=s.session||null}}catch(e){}
+function saveEz(){try{localStorage.setItem("elifba-ezber",JSON.stringify({sel:[...ezSel],target:ezTarget,type:ezType,ans:ezAns,mix:ezMix,session:ez}))}catch(e){}}
 const ezMastered=e=>e.letters.filter(c=>(e.st[c]||0)>=e.target).length;
 function ezNewSession(letters){
   ez={letters:order.filter(c=>letters.includes(c)),st:{},ms:{},asked:0,right:0,last:null,target:ezTarget,type:ezType,ans:ezAns,finished:false};
@@ -924,7 +929,9 @@ function ezPick(box){
         :`<span class="da">Bazen harfi görüp adını yazarsın, bazen adını görüp harfi klavyeden bulursun</span>`)
        :(ezType==="harf"?`<span class="dq">Be</span><span class="da">4 harf arasından <span class="ar">ب</span> harfine dokunursun</span>`
         :ezType==="isim"?`<span class="dq ar">ب</span><span class="da">4 isim arasından <b>Be</b>'ye dokunursun</span>`
-        :`<span class="da">İki soru türü karışık gelir</span>`)}</div></div>
+        :`<span class="da">İki soru türü karışık gelir</span>`)}</div>
+     ${ezAns==="yaz"&&ezType!=="isim"?`<div class="mixrow"><div><b>Harfleri karıştır</b><small>Arapça klavyede harflerin yeri her soruda değişir. Böylece harfi yerinden değil, şeklinden tanırsın.</small></div>
+       <div class="seg mixseg"><button data-mx="1" class="${ezMix?"sel":""}">Açık</button><button data-mx="0" class="${ezMix?"":"sel"}">Kapalı</button></div></div>`:""}</div>
    <button class="btn pri" id="ezStart" ${n<2?"disabled":""}>${n<2?"En az 2 harf seç":`Başla · ${n} harf`}</button>`;
   const re=()=>{saveEz();ezPick(box)};
   box.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{const c=b.dataset.c;ezSel.has(c)?ezSel.delete(c):ezSel.add(c);re()});
@@ -934,6 +941,7 @@ function ezPick(box){
   box.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{ezTarget=+b.dataset.tg;re()});
   box.querySelectorAll("[data-ty]").forEach(b=>b.onclick=()=>{ezType=b.dataset.ty;re()});
   box.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{ezAns=b.dataset.an;re()});
+  box.querySelectorAll("[data-mx]").forEach(b=>b.onclick=()=>{ezMix=b.dataset.mx==="1";re()});
   const r=box.querySelector("#ezResume");if(r)r.onclick=()=>{ezView="run";renderEzber(box);document.querySelector("main").scrollTop=0};
   box.querySelector("#ezStart").onclick=()=>ezNewSession([...ezSel]);
 }
@@ -1021,6 +1029,8 @@ function ezRun(box){
   }
   const K=box.querySelector("#ezKb");K.hidden=mode!=="kb";
   K.querySelectorAll("button").forEach(b=>{b.disabled=false;b.className=""});
+  // Karıştır açıksa her soruda tuşların yeri değişir; kapalıysa Elif-Ba sırası
+  if(mode==="kb"){const keys=[...K.children];(ezMix?shuffle(keys.slice()):keys.sort((x,y)=>ALLC.indexOf(x.dataset.v)-ALLC.indexOf(y.dataset.v))).forEach(b=>K.appendChild(b))}
   const T=box.querySelector("#ezType"),inp=box.querySelector("#ezIn");T.hidden=mode!=="type";
   inp.value="";inp.className="";
   box.querySelector("#ezCheck").disabled=false;
