@@ -206,6 +206,13 @@ section{display:flex;flex-direction:column;gap:18px}
 .qhead .qask{flex:1}
 .qhead .btn{flex:0 0 auto}
 .ezq .fb{min-height:4.8em}
+.fkx{width:100%;max-width:440px;margin:6px 0 4px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;font-weight:400;font-size:.9rem;color:var(--ink,inherit);display:flex;flex-direction:column;gap:4px}
+.fkx .fkh{color:var(--ink,inherit)}
+.fkx .fkl{display:flex;gap:8px;align-items:center;line-height:1.35}
+.fkx .fkl i{font-style:normal;font-weight:700;width:1.1em;flex:none}
+.fkx .fkl.ok i{color:var(--good)}.fkx .fkl.no i{color:var(--bad)}
+.fkx .ar{font-size:1.9rem;line-height:1.1;unicode-bidi:isolate}
+.fkx .fke{color:var(--muted);font-size:.84rem}
 body.typing header,body.typing nav,body.typing .ezbar{display:none}
 body.typing main{padding-top:8px}
 body.typing .ezq{padding:10px 12px;gap:6px}
@@ -386,7 +393,7 @@ const L=[
  ["ب","Be","b","b","Türkçedeki b. Kayık gibi gövde, altında 1 nokta."],
  ["ت","Te","t","t","Türkçedeki t. Be ile aynı gövde, üstünde 2 nokta."],
  ["ث","Se","s (peltek)","s","Peltek s: dil ucu dişlerin arasına hafifçe değer. Üstünde 3 nokta."],
- ["ج","Cim","c","c","Türkçedeki c. Kanca gövde, altında 1 nokta."],
+ ["ج","Cim","c","c","Türkçedeki c. Kanca gövde, 1 noktası ortada (kancanın içinde)."],
  ["ح","Ha","h (sert)","h","Boğazın ortasından nefesli, sert h. Noktası yok."],
  ["خ","Hı","h (hırıltılı)","h","Gırtlaktan hırıltılı h. Üstünde 1 nokta."],
  ["د","Dal","d","d","Türkçedeki d. Kendinden sonraki harfe bitişmez.",1],
@@ -415,7 +422,7 @@ const L=[
 const G=[
  ["Tek başına","ilk harf",["ا"]],
  ["Kayık ailesi","1 · 2 · 3 nokta",["ب","ت","ث"]],
- ["Kanca ailesi","altta · yok · üstte",["ج","ح","خ"]],
+ ["Kanca ailesi","ortada · yok · üstte",["ج","ح","خ"]],
  ["Köşe ailesi","noktasız · noktalı",["د","ذ"]],
  ["Kuyruk ailesi","noktasız · noktalı",["ر","ز"]],
  ["Dişli aile","noktasız · 3 nokta",["س","ش"]],
@@ -692,10 +699,34 @@ document.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{
   set=b.dataset.set;document.querySelectorAll("[data-set]").forEach(o=>o.classList.toggle("sel",o===b));newRound()});
 
 // ===== HARF ÖĞREN =====
-const FARK={"ا":"dik çizgi","ب":"altta 1 nokta","ت":"üstte 2 nokta","ث":"üstte 3 nokta","ج":"altta 1 nokta","ح":"noktasız","خ":"üstte 1 nokta",
+const FARK={"ا":"dik çizgi","ب":"altta 1 nokta","ت":"üstte 2 nokta","ث":"üstte 3 nokta","ج":"ortada 1 nokta (içinde)","ح":"noktasız","خ":"üstte 1 nokta",
  "د":"noktasız","ذ":"üstte 1 nokta","ر":"noktasız","ز":"üstte 1 nokta","س":"noktasız, 3 diş","ش":"üstte 3 nokta","ص":"noktasız","ض":"üstte 1 nokta",
  "ط":"noktasız","ظ":"üstte 1 nokta","ع":"noktasız","غ":"üstte 1 nokta","ف":"üstte 1 nokta","ق":"üstte 2 nokta","ك":"içinde küçük işaret",
  "ل":"kıvrık uzun çizgi","م":"yuvarlak baş, kuyruk","ن":"çanak, üstte 1 nokta","و":"küçük baş, kuyruk","ه":"noktasız yuvarlak","لا":"ل + ا birleşik","ي":"altta 2 nokta"};
+// Yanlışta doğru harf ile seçilen harfin farkı (gövde + nokta + ses)
+const GOVDE={"ا":"dik çizgi","ب":"kayık gövde","ت":"kayık gövde","ث":"kayık gövde","ج":"kanca gövde","ح":"kanca gövde","خ":"kanca gövde",
+ "د":"köşe gövde","ذ":"köşe gövde","ر":"aşağı inen kuyruk","ز":"aşağı inen kuyruk","س":"üç dişli gövde","ش":"üç dişli gövde",
+ "ص":"yatık halka gövde","ض":"yatık halka gövde","ط":"sancak gövde (halka + dik çubuk)","ظ":"sancak gövde (halka + dik çubuk)",
+ "ع":"göz gövde (açık baş)","غ":"göz gövde (açık baş)","ف":"yuvarlak baş","ق":"yuvarlak baş","ك":"Kef gövdesi","ل":"uzun dik, altı kıvrık",
+ "م":"küçük yuvarlak baş, aşağı kuyruk","ن":"çanak gövde","و":"küçük baş, kıvrık kuyruk","ه":"yuvarlak gövde","لا":"Lam + Elif birleşik","ي":"Ye gövdesi (alttan dönen kuyruk)"};
+const NK={"ب":[1,"alt"],"ت":[2,"ust"],"ث":[3,"ust"],"ج":[1,"orta"],"خ":[1,"ust"],"ذ":[1,"ust"],"ز":[1,"ust"],"ش":[3,"ust"],"ض":[1,"ust"],
+ "ظ":[1,"ust"],"غ":[1,"ust"],"ف":[1,"ust"],"ق":[2,"ust"],"ن":[1,"ust"],"ي":[2,"alt"]};
+function noktaStr(x){const k=NK[x];if(!k)return x==="ك"?"noktasız (içinde küçük işaret var)":"noktasız";
+  return k[1]==="orta"?"1 noktası ortada (kancanın içinde)":k[1]==="alt"?`altında ${k[0]} nokta`:`üstünde ${k[0]} nokta`}
+function farkHTML(c,o){
+  if(!o||o===c||!byChar[o]||!byChar[c])return "";
+  const nm=x=>`<b>${byChar[x][1]}</b> <span class="ar">${x}</span>`;
+  const sameB=GOVDE[c]===GOVDE[o],sameN=noktaStr(c)===noktaStr(o);
+  let head,lines;
+  if(sameB&&!sameN){head=`İkisinin gövdesi aynı (${GOVDE[c]}). <b>Farkı noktada:</b>`;lines=[c,o].map(x=>`${nm(x)}: ${noktaStr(x)}`)}
+  else if(!sameB&&sameN){head=`İkisi de ${noktaStr(c)}. <b>Farkı gövdede:</b>`;lines=[c,o].map(x=>`${nm(x)}: ${GOVDE[x]}`)}
+  else{head=`<b>Gövdesi de noktası da farklı:</b>`;lines=[c,o].map(x=>`${nm(x)}: ${GOVDE[x]}, ${noktaStr(x)}`)}
+  let ex="";
+  if("فق".includes(c)&&"فق".includes(o))ex="Sonda ya da tek başınayken Kaf'ın kuyruğu daha derin ve yuvarlaktır, Fe'ninki daha düz uzanır.";
+  const s3=byChar[c][3],o3=byChar[o][3];
+  if(s3&&s3===o3)ex+=(ex?"<br>":"")+`Sesleri de birbirine yakın: ${byChar[c][1]} = ${byChar[c][2]}, ${byChar[o][1]} = ${byChar[o][2]}.`;
+  return `<div class="fkx"><div class="fkh">${head}</div>${lines.map((l,i)=>`<div class="fkl ${i?"no":"ok"}"><i>${i?"✗":"✓"}</i><span>${l}</span></div>`).join("")}${ex?`<div class="fke">${ex}</div>`:""}</div>`;
+}
 const TEETH="بتثني";
 const SHAPE_NOTE={
  "ه":"Şekli en çok değişen harflerden: başta هـ, ortada ـهـ, sonda ـه. Ezberlemek için bu üçüne iyi bak.",
@@ -1089,7 +1120,8 @@ function ezJudge(box,o,typed,btn,typo){
     fb.innerHTML=s>=e.target?`✓ Doğru! ${byChar[c][1]} ezberlendi.<small>${c} artık sorulmayacak.${extra}</small>`:`✓ Doğru!<small>${c} = ${byChar[c][1]} · ${s} / ${e.target}${extra}</small>`}
   else{e.st[c]=0;e.ms[c]=(e.ms[c]||0)+1;buzz([60,60,60]);fb.style.color="var(--bad)";
     const what=o?`${typed!=null?"Yazdığın":"Seçtiğin"}: ${byChar[o][1]} <span class="ar" style="font-size:1.2rem">${o}</span> · `:(typed?`Yazdığın: "${typed.replace(/[<>&"]/g,"")}" · `:"");
-    fb.innerHTML=`${o||typed?"✗ Yanlış.":"Cevap:"} ${byChar[c][1]} <span class="ar" style="font-size:1.6rem">${c}</span><small>${what}${FARK[c]}<br>Sayaç sıfırlandı, bu harf yine gelecek.${hint}</small>`}
+    const fk=farkHTML(c,o);
+    fb.innerHTML=`${o||typed?"✗ Yanlış. Doğrusu:":"Cevap:"} ${byChar[c][1]} <span class="ar" style="font-size:1.6rem">${c}</span>${fk||`<small>${what}${FARK[c]}</small>`}<small>Sayaç sıfırlandı, bu harf yine gelecek.${hint}</small>`}
   saveEz();
   ezUpdateHead(box,e);
   if(ok){ezTimer=setTimeout(()=>{if(learnView==="ezber"&&ezView==="run"&&ez===e)ezRun(box)},typo?1800:900);return}
