@@ -395,7 +395,7 @@ const L=[
  ["ث","Se","s (peltek)","s","Peltek s: dil ucu dişlerin arasına hafifçe değer. Üstünde 3 nokta."],
  ["ج","Cim","c","c","Türkçedeki c. Kanca gövde, 1 noktası ortada (kancanın içinde)."],
  ["ح","Ha","h (sert)","h","Boğazın ortasından nefesli, sert h. Noktası yok."],
- ["خ","Hı","h (hırıltılı)","h","Gırtlaktan hırıltılı h. Üstünde 1 nokta."],
+ ["خ","Hı","h (hırıltılı)","h","Boğazın ağza yakın üst kısmından, hırıltılı h. Üstünde 1 nokta."],
  ["د","Dal","d","d","Türkçedeki d. Kendinden sonraki harfe bitişmez.",1],
  ["ذ","Zel","z (peltek)","z","Peltek z. Dal gibi ama üstünde 1 nokta.",1],
  ["ر","Ra","r","r","Türkçedeki r. Aşağı inen kuyruk.",1],
@@ -407,7 +407,7 @@ const L=[
  ["ط","Tı","t (kalın)","t","Kalın t. Sancak gibi dik çubuklu, noktasız."],
  ["ظ","Zı","z (kalın)","z","Kalın peltek z. Tı gibi ama üstünde 1 nokta."],
  ["ع","Ayn","boğaz sesi","‘","Boğazın ortasından sıkılarak çıkan ses. Türkçede karşılığı yok. Göz gibi açık baş."],
- ["غ","Gayn","ğ (kalın)","ğ","Gırtlaktan, gargara yapar gibi ğ. Ayn gibi ama üstünde 1 nokta."],
+ ["غ","Gayn","ğ (kalın)","ğ","Boğazın ağza yakın üst kısmından, gargara yapar gibi ğ. Ayn gibi ama üstünde 1 nokta."],
  ["ف","Fe","f","f","Türkçedeki f. Yuvarlak baş, üstünde 1 nokta."],
  ["ق","Kaf","k (kalın)","k","Dilin en arkasından kalın k. Üstünde 2 nokta, kuyruğu daha derin."],
  ["ك","Kef","k (ince)","k","İnce k (kedi'deki gibi). İçinde küçük bir işaret var."],
@@ -437,12 +437,24 @@ const byChar=Object.fromEntries(L.map(x=>[x[0],x]));
 const order=G.flatMap(g=>g[2]);
 const groupOf=c=>G.find(g=>g[2].includes(c))[2];
 const KALIN="خصضطظغق"; // her zaman kalın
-const isThick=c=>KALIN.includes(c)||c==="ح"||c==="ع";
+const isThick=c=>KALIN.includes(c);
+const BOGAZ="حع"; // kalın değil; Türkçe okunuşta üstünü a, esresi i, ötresi u
+const vfold=s=>s.replace(/e/g,"a").replace(/ı/g,"i").replace(/ü/g,"u");
+// Ha / Ayn'da e-a, i-ı, u-ü farkı kaynaklara göre değişebildiği için bunlar yanlış şık yapılmaz
+const okD=(c,x,ans)=>x!==ans&&!(BOGAZ.includes(c)&&vfold(x)===vfold(ans));
+function harfNot(c,h){ // h: a,i,u ya da "c" (önünde üstün olan cezm/şedde)
+  const n=byChar[c][1];
+  if(KALIN.includes(c))return `<b>${n}</b> kalın harftir.`;
+  if(c==="ر")return h==="i"?"Ra esrede ince okunur.":h==="c"?"Ra'dan önce üstün olduğu için kalın okunur.":"Ra üstün ve ötrede kalın okunur.";
+  if(c==="ح")return "Ha boğaz harfidir: üstünü <b>ha</b>, esresi <b>hi</b>, ötresi <b>hu</b> okunur.";
+  if(c==="ع")return "Ayn boğaz harfidir: üstünü <b>‘a</b>, esresi <b>‘i</b>, ötresi <b>‘u</b> okunur.";
+  return "";
+}
 
 // --- okunuş kuralları ---
 function vowel(c,h){ // h: a,i,u
   if(c==="ر") return {a:"a",i:"i",u:"u"}[h];
-  if(c==="ع") return {a:"a",i:"i",u:"u"}[h];
+  if(BOGAZ.includes(c)) return {a:"a",i:"i",u:"u"}[h];
   if(isThick(c)) return {a:"a",i:"ı",u:"u"}[h];
   return {a:"e",i:"i",u:"ü"}[h];
 }
@@ -455,7 +467,7 @@ function read(c,h){
   if(c==="ا") return {a:"e",i:"i",u:"ü"}[h];
   return byChar[c][3]+vowel(c,h);
 }
-const preV=c=>(isThick(c)||c==="ر")?"a":"e"; // cezm/şedde örneğinde öndeki elifin sesi
+const preV=c=>(isThick(c)||c==="ر"||BOGAZ.includes(c))?"a":"e"; // cezm/şedde örneğinde öndeki elifin sesi
 // Bir harf için tüm hareke durumları
 function cases(c){
   const k=byChar[c][3];
@@ -466,7 +478,7 @@ function cases(c){
    ["أ"+DA,"Ötre","Üstte küçük vav","ü"],
    ["sep","Elif uzatma harfi olunca"],
    ["ب"+FA+"ا","Uzatma","Üstünlü harften sonra harekesiz elif → sesi uzatır","bâ"],
-   ["آ","Çeker (medd)","Elifin üstünde dalga: uzun â","â"],
+   ["آ","Medli elif","Hemze ile elifin birlikte yazılışı: normal uzatma","â"],
    ["sep","Tenvin üstünden sonra"],
    ["ب"+TF+"ا","Okunmaz","Tenvin üstünden sonraki elif okunmaz","ben"],
   ];
@@ -496,14 +508,14 @@ function cases(c){
 }
 function special(c){
   const x=byChar[c],o=[];
-  if(c==="ا"){o.push("Elif kendisi asla hareke almaz. Üstünde veya altında hareke görürsen orada aslında <b>hemze (ء)</b> vardır: أَ e, إِ i, أُ ü.","Harekesiz elif, kendinden önceki <b>üstünlü</b> harfi uzatır: بَا bâ, قَالَ kâle.","Elifin üstünde dalga işareti (<b>çeker</b>) varsa daha uzun çekilir: آ","Kelime sonunda tenvin üstünden sonra yazılan elif okunmaz: كِتَابًا kitâben.")}
+  if(c==="ا"){o.push("Elif kendisi asla hareke almaz. Üstünde veya altında hareke görürsen orada aslında <b>hemze (ء)</b> vardır: أَ e, إِ i, أُ ü.","Harekesiz elif, kendinden önceki <b>üstünlü</b> harfi uzatır: بَا bâ, قَالَ kâle.","Kelime başındaki آ, hemze ile uzatma elifinin birlikte yazılışıdır; normal uzatma gibi okunur: آمَنَ â-me-ne. Kelime içinde uzatma harfinin üstünde dalga (<b>çeker</b>) varsa daha uzun çekilir: جَآءَ câ-e.","Kelime sonunda tenvin üstünden sonra yazılan elif okunmaz: كِتَابًا kitâben.")}
   if(c==="و"){o.push("Harekeli olursa normal <b>v</b> okunur: وَ ve, وِ vi, وُ vü.","Harekesiz vav'dan önceki harf <b>ötreli</b> ise vav uzatma harfidir: بُو bû.","Cezmli vav'dan önceki harf <b>üstünlü</b> ise 'ev' gibi okunur: أَوْ ev, خَوْفٌ havfün.")}
   if(c==="ي"){o.push("Harekeli olursa normal <b>y</b> okunur: يَ ye, يِ yi, يُ yü.","Harekesiz ye'den önceki harf <b>esreli</b> ise ye uzatma harfidir: بِي bî.","Cezmli ye'den önceki harf <b>üstünlü</b> ise 'ey' gibi okunur: أَيْ ey, بَيْتٌ beytün.","Kelime sonunda noktasız yazılırsa (ى) elif gibi uzatır: عَلَى alâ.")}
   if(c==="ر"){o.push("Ra <b>üstün ve ötrede kalın</b> (ra, ru), <b>esrede ince</b> (ri) okunur.","Cezmli ra'dan önce üstün veya ötre varsa kalın okunur: أَرْ ar.")}
   if(c==="ه"){o.push("Kelime sonundaki iki noktalı he (<span class=\"ar\" style=\"font-size:1.3rem\">ة</span>) <b>yuvarlak te</b>dir: okumaya devam edince t, durunca h okunur.")}
   if(c==="لا"){o.push("Lam ile elif yan yana gelince ayrı yazılmaz, bu birleşik şekil kullanılır.","Hareke lam'ın üstüne konur, elif onu uzatır: لَا lâ.")}
   if(KALIN.includes(c)) o.push("<b>Kalın harftir</b>, her zaman ağız dolu okunur: üstün <b>a</b>, esre <b>ı</b>, ötre <b>u</b> (ince harflerdeki e, i, ü değil).");
-  if(c==="ح") o.push("Ha kalın okunur: حَ ha, حِ hı, حُ hu. Yumuşak he (ه) ile karıştırma.");
+  if(c==="ح") o.push("Ha kalın harf değildir, boğazın ortasından okunur: حَ ha, حِ hi, حُ hu. Yumuşak he (ه) ile karıştırma.");
   if(c==="ع") o.push("Ayn'ın sesi boğazdan gelir: عَ ‘a, عِ ‘i, عُ ‘u. Elif'in hemzesi (أَ e) gibi değil, boğazı sıkarak okunur.");
   if(["ث","ذ","ظ"].includes(c)) o.push("Peltek harftir: dil ucu ön dişlerin arasına hafifçe çıkar.");
   if(x[5]&&c!=="لا") o.push("Kendinden <b>sonraki</b> harfe bitişmez. Ondan sonra gelen harf baş şekliyle yazılır.");
@@ -552,7 +564,7 @@ function openLetter(c){
   const sp=special(c);
   const P=document.getElementById("panel");
   P.innerHTML=`
-   <div class="ptop"><div class="big ar">${c}</div><div><h2>${x[1]}</h2><p>Ses: <b>${x[2]}</b>${isThick(c)||c==="ر"?" · kalın":""}</p>${sib.length?`<p>Benzeri: <span class="ar" style="font-size:1.6rem">${sib.join("  ")}</span></p>`:""}</div></div>
+   <div class="ptop"><div class="big ar">${c}</div><div><h2>${x[1]}</h2><p>Ses: <b>${x[2]}</b>${isThick(c)?" · kalın":c==="ر"?" · üstün ve ötrede kalın":""}</p>${sib.length?`<p>Benzeri: <span class="ar" style="font-size:1.6rem">${sib.join("  ")}</span></p>`:""}</div></div>
    <div class="note">${x[4]}</div>
    <div><p class="lbl">Hareke gelince nasıl okunur?</p>${htable(cases(c))}</div>
    ${sp.length?`<div><p class="lbl">Bu harfe özel kurallar</p><ul class="rules">${sp.map(s=>`<li>${s.replace(/[\u0600-\u06FF]+/g,m=>`<span class="ar" style="font-size:1.3rem">${m}</span>`)}</li>`).join("")}</ul></div>`:""}
@@ -611,18 +623,18 @@ document.getElementById("hideBtn").onclick=e=>{hide=!hide;e.target.textContent=h
 // ===== KURALLAR =====
 const R=[
  ["Üstün","بَ","Harfin <b>üstünde</b> eğik çizgi. İnce harflerde <b>e</b>, kalın harflerde <b>a</b> okunur.",[["بَ","be"],["سَ","se"],["كَ","ke"],["صَ","sa"],["قَ","ka"],["طَ","ta"]]],
- ["Esre","بِ","Harfin <b>altında</b> eğik çizgi. İnce harflerde <b>i</b>, kalın harflerde <b>ı</b> okunur.",[["بِ","bi"],["سِ","si"],["كِ","ki"],["صِ","sı"],["قِ","kı"],["طِ","tı"]]],
- ["Ötre","بُ","Harfin <b>üstünde</b> küçük vav. İnce harflerde <b>ü</b>, kalın harflerde <b>u</b> okunur.",[["بُ","bü"],["سُ","sü"],["كُ","kü"],["صُ","su"],["قُ","ku"],["طُ","tu"]]],
- ["Kalın ve ince harfler","ق",`Şu 7 harf <b>her zaman kalın</b> okunur: <span class="ar" style="font-size:1.4rem">خ ص ض ط ظ غ ق</span>. Ayrıca <b>ح</b> ve <b>ع</b> kalın sesle okunur. <b>ر</b> üstün ve ötrede kalın, esrede incedir. Diğer harfler incedir.`,[["سَ","se"],["صَ","sa"],["كَ","ke"],["قَ","ka"],["رَ","ra"],["رِ","ri"]]],
+ ["Esre","بِ","Harfin <b>altında</b> eğik çizgi. İnce harflerde <b>i</b>, kalın harflerde <b>ı</b> okunur (kalın harfteki ses tam ı değil, ı ile i arasıdır; dinleyerek oturur).",[["بِ","bi"],["سِ","si"],["كِ","ki"],["صِ","sı"],["قِ","kı"],["طِ","tı"]]],
+ ["Ötre","بُ","Harfin <b>üstünde</b> küçük vav. İnce harflerde <b>ü</b>, kalın harflerde <b>u</b> okunur (ince harfteki ses tam ü değil, ü ile u arasıdır; dinleyerek oturur).",[["بُ","bü"],["سُ","sü"],["كُ","kü"],["صُ","su"],["قُ","ku"],["طُ","tu"]]],
+ ["Kalın ve ince harfler","ق",`Şu 7 harf <b>her zaman kalın</b> okunur: <bdi class="ar" style="font-size:1.4rem">خ ص ض ط ظ غ ق</bdi>.<br><b>Ra</b> (<bdi class="ar">ر</bdi>) üstün ve ötrede kalın, esrede incedir. Diğer harfler incedir.<br>Boğaz harfleri <b>Ha</b> (<bdi class="ar">ح</bdi>) ve <b>Ayn</b> (<bdi class="ar">ع</bdi>) kalın değildir; ama Türkçe okunuşta üstünleri <b>a</b> ile okunur: <bdi class="ar">حَ</bdi> ha, <bdi class="ar">عَ</bdi> ‘a. Esreleri <b>i</b>, ötreleri <b>u</b> okunur.`,[["سَ","se"],["صَ","sa"],["كَ","ke"],["قَ","ka"],["رَ","ra"],["رِ","ri"],["حَ","ha"],["حِ","hi"]]],
  ["Hece okuma","كَتَبَ","Harekeli harfler yan yana gelince her biri bir hece olur. Sağdan başlayıp tek tek oku.",[["كَتَبَ","ke-te-be"],["جَلَسَ","ce-le-se"],["ذَهَبَ","ze-he-be"],["سَمِعَ","se-mi-‘a"],["كُتُبُ","kü-tü-bü"]]],
  ["Cezm","بْ","Harfin üstünde küçük <b>halka</b>. Bu harf sesli harf almaz, <b>önceki heceye eklenir</b>.",[["أَبْ","eb"],["مِنْ","min"],["قُلْ","kul"],["لَمْ","lem"],["هُمْ","hüm"]]],
  ["Şedde","بّ","Harfin üstünde küçük <b>w</b>. Harf <b>iki kere</b> okunur: biri önceki heceye cezmli eklenir, ikincisi kendi harekesiyle okunur.",[["رَبِّ","rab-bi"],["إِنَّ","in-ne"],["ثُمَّ","süm-me"],["أَبَّ","eb-be"]]],
  ["Tenvin","بٌ","Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> sesi ekler. Tenvin üstünden sonra gelen elif <b>okunmaz</b>.",[["بًا","ben"],["بٍ","bin"],["بٌ","bün"],["قَلَمٌ","ka-le-mün"],["أَحَدٌ","e-ha-dün"]]],
  ["Uzatma (med) harfleri","ا و ي","<b>Elif, vav, ye</b> harekesiz gelirse önceki sesi uzatır: üstünden sonra elif → <b>â</b>, esreden sonra ye → <b>î</b>, ötreden sonra vav → <b>û</b>. Bir elif miktarı (iki hareke) uzatılır.",[["بَا","bâ"],["بِي","bî"],["بُو","bû"],["قَالَ","kâ-le"],["قِيلَ","kî-le"],["يَقُولُ","ye-kû-lü"]]],
  ["Lin (ev, ey)","أَوْ","Cezmli <b>vav</b> veya <b>ye</b>'den önce <b>üstün</b> gelirse uzatmaz, yumuşak okunur: <b>ev</b>, <b>ey</b>.",[["أَوْ","ev"],["أَيْ","ey"],["خَوْفٌ","hav-fün"],["بَيْتٌ","bey-tün"]]],
- ["Çeker (medd işareti)","آ","Harfin üstündeki <b>dalga</b> işareti. Normal uzatmadan <b>daha uzun</b> çekilir (yaklaşık 2–5 elif miktarı). Öğretmeninden dinleyerek öğrenmek en iyisidir.",[["آ","â (uzun)"],["آمَنَ","â-me-ne"],["جَاءَ","câ-e"],["السَّمَاءِ","es-se-mâ-i"]]],
+ ["Çeker (medd işareti)","ـٓ","Uzatma harfinin üstündeki <b>dalga</b> işareti. Normal uzatmadan <b>daha uzun</b> çekilir. Ne kadar çekileceğini hocandan dinleyerek öğrenmek en doğrusudur.<br>Kelime başındaki <span class=\"ar\">آ</span> ise hemze ile elifin birlikte yazılışıdır, <b>normal uzatma</b> gibi okunur: <span class=\"ar\">آمَنَ</span> â-me-ne.",[["جَآءَ","câ-e"],["السَّمَآءِ","es-se-mâ-i"],["سُوٓءَ","sû-e"]]],
  ["Ters harekeler","ـٰ","Hareke <b>dik</b> yazılırsa sesi uzatır. Dik üstün → <b>â</b>, ters esre → <b>î</b>, ters ötre → <b>û</b>.",[["هٰذَا","hâ-zâ"],["بِهٖ","bi-hî"],["لَهٗ","le-hû"]]],
- ["Hemze","ء","Kısa, kesik bir <b>e</b> sesi taşıyıcısıdır. Genelde elif, vav veya ye'nin üstünde/altında durur. Harekeli elif aslında hemzedir.",[["أَ","e"],["إِ","i"],["أُ","ü"],["سَأَلَ","se-e-le"],["يُؤْمِنُ","yü’-mi-nü"]]],
+ ["Hemze","ء","Nefesin bir an kesildiği kısa, kesik bir sestir; <b>harekesine göre</b> okunur: أَ e, إِ i, أُ ü. Genelde elif, vav veya ye'nin üstünde/altında yazılır. Harekeli elif aslında hemzedir.",[["أَ","e"],["إِ","i"],["أُ","ü"],["سَأَلَ","se-e-le"],["يُؤْمِنُ","yü’-mi-nü"]]],
  ["Yuvarlak te","ة","Kelime sonunda iki noktalı yuvarlak he. Okumaya devam ederken <b>t</b>, kelimede durunca <b>h</b> okunur.",[["صَلَاةٌ","sa-lâ-tün"],["رَحْمَةٌ","rah-me-tün"]]],
  ["Bitişmeyen harfler","د ر و","Şu 6 harf kendinden <b>sonraki</b> harfe bitişmez: <span class=\"ar\" style=\"font-size:1.4rem\">ا د ذ ر ز و</span>. Onlardan sonra gelen harf yeni baştan yazılmış gibi görünür.",[["دَارٌ","dâ-run"],["وَرَدَ","ve-ra-de"],["زَادَ","zâ-de"]]],
 ];
@@ -650,7 +662,7 @@ function makeQ(c){
   if(mode==="hece"){
     const h="aiu"[Math.random()*3|0];const ans=read(c,h);
     const same=shuffle("aiu".split("").filter(o=>o!==h).map(o=>read(c,o)));
-    const other=[];nearLetters(c).forEach(o=>{const r=read(o,h);if(r!==ans&&!same.includes(r)&&!other.includes(r))other.push(r)});
+    const other=[];nearLetters(c).forEach(o=>{const r=read(o,h);if(okD(c,r,ans)&&!same.includes(r)&&!other.includes(r))other.push(r)});
     const opts=shuffle([ans,same[0],...other.slice(0,2)]);
     const g=glyph(c,h);
     return {ask:"Bu nasıl okunur?",show:g,big:1,ans,opts:opts.map(o=>[o,o]),fbOk:`${g} = ${ans} (${byChar[c][1]} ${({a:"üstün",i:"esre",u:"ötre"})[h]})`,key:g,ansLabel:ans};
@@ -730,7 +742,7 @@ function farkHTML(c,o){
 const TEETH="بتثني";
 const SHAPE_NOTE={
  "ه":"Şekli en çok değişen harflerden: başta هـ, ortada ـهـ, sonda ـه. Ezberlemek için bu üçüne iyi bak.",
- "ع":"Başta açık ağız عـ, ortada dolu küçük üçgen ـعـ, sonda kuyruklu ـع.",
+ "ع":"Başta açık ağız عـ, ortada kapalı küçük bir düğüm ـعـ, sonda kuyruklu ـع.",
  "غ":"Ayn gibi değişir, sadece üstünde 1 nokta var: غـ ـغـ ـغ.",
  "ك":"Başta ve ortada üstündeki küçük işaret uzun bir çizgiye dönüşür: كـ ـكـ.",
  "ي":"Başta ve ortada küçük bir dişe dönüşür, altındaki 2 nokta kalır: يـ ـيـ.",
@@ -1250,13 +1262,13 @@ const HN={a:"üstün",i:"esre",u:"ötre"};
 const MIX=["ب","ت","ج","د","ر","س","ص","ط","ع","ق","ك","ل","م","ن"];
 const RL=[
  {t:"Üstün ile hece",sub:"بَ be · صَ sa",ar:"بَ",kind:"hece",hv:["a"],ok:["a"],
-  rule:"Harfin <b>üstündeki eğik çizgi</b> üstündür. Harfe <b>e</b> sesi verir: بَ be, كَ ke.<br>Kalın harflerde <b>a</b> okunur: صَ sa, قَ ka. Kalın harfler: <span class=\"ar\">خ ص ض ط ظ غ ق</span>, ayrıca <span class=\"ar\">ح ع ر</span>.",
+  rule:"Harfin <b>üstündeki eğik çizgi</b> üstündür. Harfe <b>e</b> sesi verir: بَ be, كَ ke.<br>Kalın harflerde <b>a</b> okunur: صَ sa, قَ ka. Kalın harfler: <span class=\"ar\">خ ص ض ط ظ غ ق</span>. Ra da üstünde kalın okunur: رَ ra.<br>Boğaz harfleri Ha ve Ayn'ın üstünü de <b>a</b> okuruz: حَ ha, عَ ‘a.",
   ex:["بَ","كَ","صَ","قَ"]},
  {t:"Esre ile hece",sub:"بِ bi · صِ sı",ar:"بِ",kind:"hece",hv:["i"],ok:["a","i"],
-  rule:"Harfin <b>altındaki eğik çizgi</b> esredir. <b>i</b> sesi verir: بِ bi, سِ si.<br>Kalın harflerde <b>ı</b> okunur: صِ sı, قِ kı. Ra esrede incedir: رِ ri.",
+  rule:"Harfin <b>altındaki eğik çizgi</b> esredir. <b>i</b> sesi verir: بِ bi, سِ si.<br>Kalın harflerde <b>ı</b> okunur: صِ sı, قِ kı. Ra esrede incedir: رِ ri. Ha ve Ayn'da da <b>i</b>: حِ hi, عِ ‘i.",
   ex:["بِ","سِ","صِ","رِ"]},
  {t:"Ötre ile hece",sub:"بُ bü · صُ su",ar:"بُ",kind:"hece",hv:["u"],ok:["a","i","u"],
-  rule:"Harfin <b>üstündeki küçük vav</b> ötredir. <b>ü</b> sesi verir: بُ bü, نُ nü.<br>Kalın harflerde <b>u</b> okunur: صُ su, قُ ku, رُ ru.",
+  rule:"Harfin <b>üstündeki küçük vav</b> ötredir. <b>ü</b> sesi verir: بُ bü, نُ nü.<br>Kalın harflerde <b>u</b> okunur: صُ su, قُ ku, رُ ru. Ha ve Ayn'da da <b>u</b>: حُ hu, عُ ‘u.",
   ex:["بُ","نُ","صُ","رُ"]},
  {t:"Üç hareke bir arada",sub:"بَ بِ بُ",ar:"بِ",kind:"hece",hv:["a","i","u"],ok:["a","i","u"],
   rule:"Aynı harf üç farklı şekilde okunur. Önce <b>işarete bak</b>:<br>üstte çizgi → <b>e / a</b>, altta çizgi → <b>i / ı</b>, üstte küçük vav → <b>ü / u</b>.",
@@ -1296,9 +1308,9 @@ function heceQuestions(L2){
     shuffle(["a","i","u"].filter(o=>o!==h&&L2.ok.includes(o))).forEach(o=>cand.push(read(c,o)));
     nearLetters(c).forEach(o=>cand.push(read(o,h)));
     shuffle(LET.slice()).forEach(o=>cand.push(read(o,h)));
-    const opts=[ans];for(const x of cand) if(opts.length<4&&!opts.includes(x)) opts.push(x);
+    const opts=[ans];for(const x of cand) if(opts.length<4&&!opts.includes(x)&&okD(c,x,ans)) opts.push(x);
     return {ask:"Bu nasıl okunur?",show:g,ans,key:g,opts:shuffle(opts).map(o=>[o,o]),
-      fbOk:`${byChar[c][1]} ${HN[h]} = <b>${ans}</b>${isThick(c)||(c==="ر"&&h!=="i")?" · kalın okunur":""}`};
+      fbOk:`${byChar[c][1]} ${HN[h]} = <b>${ans}</b>${harfNot(c,h)?" · "+harfNot(c,h):""}`};
   });
 }
 function wordQuestion(w,mean,kind){
@@ -1711,7 +1723,8 @@ function kzShell(box){
   ["pointerdown","mousedown"].forEach(t=>{box.querySelector("#kzCheck").addEventListener(t,ev=>{if(!box.querySelector("#kzType").hidden)ev.preventDefault()});box.querySelector("#kzSkip").addEventListener(t,ev=>{if(!box.querySelector("#kzType").hidden)ev.preventDefault()})});
   const nextNow=()=>{clearTimeout(kzTimer);if(learnView==="ezber"&&ezKind==="kural"&&kzView==="run")kzRun(box)};
   const submit=()=>{if(!kzCur)return;if(kzCur.answered)return nextNow();const t=inp.value.trim();if(!t){inp.focus();return}
-    kzJudge(box,kzNorm(t)===kzNorm(kzCur.ans)?kzCur.ans:null,t,null)};
+    const a=kzNorm(t),b=kzNorm(kzCur.ans),okT=a===b||(BOGAZ.includes(kzCur.c)&&vfold(a)===vfold(b));
+    kzJudge(box,okT?kzCur.ans:null,t,null)};
   box.querySelector("#kzBack").onclick=()=>{ezLeave();kzView="pick";renderKural(box)};
   box.querySelector("#kzNext").onclick=nextNow;
   box.querySelector("#kzCheck").onclick=()=>{submit();inp.focus()};
@@ -1750,7 +1763,7 @@ function kzRun(box){
     if(k.ans==="yaz")mode="type";
     const sw=swapFirstV(rd);
     const cands=[sw,...famOrder(R).filter(o=>o.all||c!=="ا").map(o=>o.r(c))];
-    opts=[ans];for(const v of cands)if(v&&opts.length<4&&!opts.includes(v))opts.push(v)}
+    opts=[ans];for(const v of cands)if(v&&opts.length<4&&!opts.includes(v)&&okD(c,v,ans))opts.push(v)}
   else{ask="Hangisi böyle okunur?";show=`<div class="qname">${rd}</div><p class="qpos">${byChar[c][1]} harfi</p>`;ans=g;glyphs=true;
     opts=[g];for(const o of famOrder(R)){if(opts.length>=4)break;if(!o.all&&c==="ا")continue;const og=o.g(c);if(o.r(c)!==rd&&!opts.includes(og))opts.push(og)}}
   kzCur={id,c,ans,rd,g,mode,answered:false,k};
@@ -1773,7 +1786,7 @@ function kzJudge(box,v,typed,btn){
   if(Z.mode==="type")box.querySelector("#kzIn").className="kbin "+(ok?"ok":"no");
   k.asked++;
   const fb=box.querySelector(".fb");
-  const thick=(isThick(Z.c)||Z.c==="ر")?` <b>${byChar[Z.c][1]}</b> kalın harftir.`:"";
+  const hn=harfNot(Z.c,{u:"a",tf:"a",ma:"a",e:"i",tk:"i",my:"i",o:"u",td:"u",mv:"u",c:"c",s:"c"}[Z.id]),thick=hn?" "+hn:"";
   const ex=`<span class="ar" style="font-size:1.5rem">${Z.g}</span> = <b>${Z.rd}</b>`;
   if(ok){k.right++;k.st[Z.id]=(k.st[Z.id]||0)+1;buzz(25);const s=k.st[Z.id];fb.style.color="var(--good)";
     fb.innerHTML=s>=k.target?`✓ Doğru! ${R.ad} ezberlendi.<small>${ex}</small>`:`✓ Doğru!<small>${R.ad} · ${ex} · ${s} / ${k.target}</small>`}
