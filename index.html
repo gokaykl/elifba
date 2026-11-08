@@ -311,7 +311,9 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .tog.on i::after{left:16px}
 .kln{color:var(--kalin)}
 .klg{color:var(--kalin);font-size:.82rem;margin:-4px 0 0;text-align:center}
-.kzbar{display:flex;justify-content:center;margin:-2px 0}
+.kzbar{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;margin:-2px 0}
+.reveal{width:100%;min-height:128px;border:2px dashed var(--line);border-radius:14px;background:var(--accent-soft);color:var(--ink);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.reveal b{font-size:1.05rem}.reveal span{font-size:.85rem;color:var(--muted)}
 .seg.mixseg.s3{grid-template-columns:repeat(3,1fr)}
 .kindseg{margin-bottom:2px}
 .kpick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -994,6 +996,7 @@ function ezPick(box){
        :(ezType==="harf"?`<span class="dq">Be</span><span class="da">4 harf arasından <span class="ar">ب</span> harfine dokunursun</span>`
         :ezType==="isim"?`<span class="dq ar">ب</span><span class="da">4 isim arasından <b>Be</b>'ye dokunursun</span>`
         :`<span class="da">İki soru türü karışık gelir</span>`)}</div>
+     ${ezAns==="sec"?`<button class="tog ${optHide?"on":""}" id="ezHideP" type="button"><i></i>Şıkları gizle: önce aklından tahmin et, sonra dokunup aç</button>`:""}
 </div>
    <button class="btn pri" id="ezStart" ${n<2?"disabled":""}>${n<2?"En az 2 harf seç":`Başla · ${n} harf`}</button>`;
   const re=()=>{saveEz();ezPick(box)};
@@ -1004,6 +1007,7 @@ function ezPick(box){
   box.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{ezTarget=+b.dataset.tg;re()});
   box.querySelectorAll("[data-ty]").forEach(b=>b.onclick=()=>{ezType=b.dataset.ty;re()});
   box.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{ezAns=b.dataset.an;re()});
+  const hp=box.querySelector("#ezHideP");if(hp)hp.onclick=()=>{optHide=!optHide;saveHide();re()};
   const r=box.querySelector("#ezResume");if(r)r.onclick=()=>{ezView="run";renderEzber(box);document.querySelector("main").scrollTop=0};
   box.querySelector("#ezStart").onclick=()=>ezNewSession([...ezSel]);
   bindKind(box);
@@ -1030,9 +1034,11 @@ function ezBuildShell(box){
   box.innerHTML=`<div class="ltop"><button class="btn sm" id="ezBack">‹ Seçim</button><span style="flex:1" id="ezCount"></span><span id="ezScore" style="font-variant-numeric:tabular-nums"></span></div>
    <div class="bar ezbar" style="height:8px;margin:0"><i id="ezBar"></i></div>
    <div class="ezstrip"></div>
+   <div class="kzbar"><button class="tog" id="ezHide" type="button" hidden><i></i>Şıkları gizle, önce tahmin et</button></div>
    <div class="quiz ezq" id="ezCard">
      <div class="qhead"><p class="qask" id="ezAsk"></p><button class="btn sm" id="ezSkip" type="button" hidden>Bilmiyorum</button></div>
      <div id="ezShow"></div>
+     ${revealBtn("ezReveal")}
      <div class="opts" id="ezOpts" hidden></div>
      <div class="typein" id="ezType" hidden><input id="ezIn" class="kbin" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Harfin adını yaz"><button class="btn pri" id="ezCheck" type="button">Kontrol</button></div>
      <div class="kbbar" id="ezKbBar" hidden><button class="tog" id="ezAuto" type="button"><i></i>Her soruda karıştır</button><span style="flex:1"></span><button class="btn sm" id="ezShuffle" type="button">Karıştır</button><button class="btn sm" id="ezFix" type="button">Düzelt</button></div>
@@ -1051,6 +1057,9 @@ function ezBuildShell(box){
     const r=nameMatch(t,ezCur.c);ezJudge(box,r.letter,t,null,r.typo);
   }
   box.querySelector("#ezBack").onclick=()=>{ezLeave();ezView="pick";renderEzber(box)};
+  const ezV=()=>veil(box,ezCur,box.querySelector("#ezOpts"),box.querySelector("#ezReveal"),box.querySelector("#ezHide"));
+  box.querySelector("#ezHide").onclick=()=>{optHide=!optHide;saveHide();if(ezCur&&!optHide)ezCur.shown=true;ezV()};
+  box.querySelector("#ezReveal").onclick=()=>{if(ezCur)ezCur.shown=true;ezV();buzz(10)};
   box.querySelector("#ezNext").onclick=nextNow;
   const K0=box.querySelector("#ezKb");
   box.querySelector("#ezShuffle").onclick=()=>{shuffle([...K0.children]).forEach(b=>K0.appendChild(b));buzz(15)};
@@ -1112,6 +1121,7 @@ function ezRun(box){
   box.querySelector("#ezSkip").hidden=!yaz;
   box.querySelector("#ezCard").classList.toggle("yaz",yaz);
   box.querySelector(".fb").innerHTML="";
+  veil(box,ezCur,O,box.querySelector("#ezReveal"),box.querySelector("#ezHide"));
   if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}
   else if(document.activeElement===inp)inp.blur();
 }
@@ -1692,7 +1702,8 @@ function kzPick(box){
      <div class="seg ktype">${KTYPES.map(([k,t])=>`<button data-kt="${k}" class="${k===kType?"sel":""}">${t}</button>`).join("")}</div>
      ${kType==="oku"?`<div class="seg">${[["sec","Seçerek"],["yaz","Yazarak"]].map(([k,t])=>`<button data-ka="${k}" class="${k===kAns?"sel":""}">${t}</button>`).join("")}</div>`:""}
      <div class="demo">${kzDemo()}</div>
-     <button class="tog ${kRed?"on":""}" id="kzRedP" type="button"><i></i>Kalın harfleri kırmızı göster (alışınca kapatabilirsin)</button></div>
+     <button class="tog ${kRed?"on":""}" id="kzRedP" type="button"><i></i>Kalın harfleri kırmızı göster (alışınca kapatabilirsin)</button>
+     ${kType==="oku"&&kAns==="yaz"?"":`<button class="tog ${optHide?"on":""}" id="kzHideP" type="button"><i></i>Şıkları gizle: önce aklından tahmin et, sonra dokunup aç</button>`}</div>
    <button class="btn pri" id="kzStart" ${n<1?"disabled":""}>${n<1?"En az 1 kural seç":`Başla · ${n} kural`}</button>`;
   bindKind(box);
   const re=()=>{saveKz();kzPick(box)};
@@ -1704,6 +1715,7 @@ function kzPick(box){
   box.querySelectorAll("[data-kt]").forEach(b=>b.onclick=()=>{kType=b.dataset.kt;re()});
   box.querySelectorAll("[data-ka]").forEach(b=>b.onclick=()=>{kAns=b.dataset.ka;re()});
   box.querySelector("#kzRedP").onclick=()=>{kRed=!kRed;re()};
+  const hk=box.querySelector("#kzHideP");if(hk)hk.onclick=()=>{optHide=!optHide;saveHide();re()};
   const r=box.querySelector("#kzResume");if(r)r.onclick=()=>{kzView="run";renderKural(box);document.querySelector("main").scrollTop=0};
   box.querySelector("#kzStart").onclick=()=>kzNew([...kSel]);
 }
@@ -1713,6 +1725,15 @@ function kzNew(rules){
 }
 function kzStrip(k){return `<div class="ezstrip">${k.rules.map(id=>{const s=Math.min(k.st[id]||0,k.target);
   return `<div class="ezc ${s>=k.target?"m":""}"><span class="ar">${KRby[id].ar}</span><span class="pips">${Array.from({length:k.target},(_,i)=>`<i class="${i<s?"f":""}"></i>`).join("")}</span></div>`}).join("")}</div>`}
+// Şıkları gizle: önce aklından tahmin et, sonra dokunup aç (harf ve kural ezberi ortak ayar)
+let optHide=false;try{optHide=localStorage.getItem("elifba-gizle")==="1"}catch(e){}
+const saveHide=()=>{try{localStorage.setItem("elifba-gizle",optHide?"1":"0")}catch(e){}};
+const revealBtn=id=>`<button class="reveal" id="${id}" type="button" hidden><b>Önce aklından tahmin et</b><span>Sonra dokun, şıkları aç</span></button>`;
+function veil(box,Z,O,R,T){ // Z: geçerli soru, O: şıklar, R: aç düğmesi, T: ayar düğmesi
+  if(!Z)return;const on=optHide&&Z.mode==="opts"&&!Z.answered&&!Z.shown;
+  O.hidden=Z.mode!=="opts"||on;R.hidden=!on;
+  if(T){T.classList.toggle("on",optHide);T.hidden=Z.mode!=="opts"}
+}
 // Kalın harfleri kırmızı göster: yalnız 7 kalın harf; Ra sadece kalın okunduğu yerde (esre, tenvin esre, ye ile uzatmada ince)
 const kzRedOn=(c,id)=>KALIN.includes(c)||(c==="ر"&&!["e","tk","my"].includes(id));
 function kzPaint(g,c,id){
@@ -1734,10 +1755,11 @@ function kzShell(box){
   box.innerHTML=`<div class="ltop"><button class="btn sm" id="kzBack">‹ Seçim</button><span style="flex:1" id="kzCount"></span><span id="kzScore" style="font-variant-numeric:tabular-nums"></span></div>
    <div class="bar ezbar" style="height:8px;margin:0"><i id="kzBar"></i></div>
    <div class="ezstrip"></div>
-   <div class="kzbar"><button class="tog" id="kzRed" type="button"><i></i>Kalın harfleri kırmızı göster</button></div>
+   <div class="kzbar"><button class="tog" id="kzRed" type="button"><i></i>Kalın harfleri kırmızı göster</button><button class="tog" id="kzHide" type="button" hidden><i></i>Şıkları gizle, önce tahmin et</button></div>
    <div class="quiz ezq" id="kzCard">
      <div class="qhead"><p class="qask" id="kzAsk"></p><button class="btn sm" id="kzSkip" type="button" hidden>Bilmiyorum</button></div>
      <div id="kzShow"></div>
+     ${revealBtn("kzReveal")}
      <div class="opts" id="kzOpts"></div>
      <div class="typein" id="kzType" hidden><input id="kzIn" class="kbin" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Okunuşunu yaz (â için aa)"><button class="btn pri" id="kzCheck" type="button">Kontrol</button></div>
      <div class="fb" aria-live="polite"></div>
@@ -1751,6 +1773,9 @@ function kzShell(box){
     kzJudge(box,okT?kzCur.ans:null,t,null)};
   box.querySelector("#kzBack").onclick=()=>{ezLeave();kzView="pick";renderKural(box)};
   box.querySelector("#kzRed").onclick=()=>{kRed=!kRed;saveKz();kzDraw(box)};
+  const kzV=()=>veil(box,kzCur,box.querySelector("#kzOpts"),box.querySelector("#kzReveal"),box.querySelector("#kzHide"));
+  box.querySelector("#kzHide").onclick=()=>{optHide=!optHide;saveHide();if(kzCur&&!optHide)kzCur.shown=true;kzV()};
+  box.querySelector("#kzReveal").onclick=()=>{if(kzCur)kzCur.shown=true;kzV();buzz(10)};
   box.querySelector("#kzNext").onclick=nextNow;
   box.querySelector("#kzCheck").onclick=()=>{submit();inp.focus()};
   inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.keyCode===13){ev.preventDefault();submit()}});
@@ -1801,6 +1826,7 @@ function kzRun(box){
   box.querySelector("#kzNext").hidden=true;box.querySelector("#kzSkip").hidden=mode!=="type";
   box.querySelector(".fb").innerHTML="";
   kzDraw(box);
+  veil(box,kzCur,O,box.querySelector("#kzReveal"),box.querySelector("#kzHide"));
   if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}else if(document.activeElement===inp)inp.blur();
 }
 function kzJudge(box,v,typed,btn){
