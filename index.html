@@ -16,16 +16,16 @@
 <style>
 :root{
   --bg:#F3F5F1; --surface:#FFFFFF; --ink:#1B2A33; --muted:#5D6B70;
-  --line:#DCE2DC; --accent:#B97910; --accent-soft:#F6E8CC; --good:#2E7D4F; --bad:#B4412F; --blue:#2F6690;
+  --line:#DCE2DC; --accent:#B97910; --accent-soft:#F6E8CC; --good:#2E7D4F; --bad:#B4412F; --blue:#2F6690; --kalin:#D0261C;
   --ar:"Noto Naskh Arabic","Noto Sans Arabic","Geeza Pro","Damascus","Amiri",serif;
   --ui:system-ui,Roboto,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#11171B; --surface:#1A2328; --ink:#E7ECE8; --muted:#97A5A9;
-  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; color-scheme:dark}}
+  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; --kalin:#FF6B5E; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#11171B; --surface:#1A2328; --ink:#E7ECE8; --muted:#97A5A9;
-  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; color-scheme:dark}
+  --line:#2B373D; --accent:#E8B04A; --accent-soft:#3A2F18; --good:#5FC08A; --bad:#E77B66; --blue:#7DB4E0; --kalin:#FF6B5E; color-scheme:dark}
 html{background:var(--line)}
 /* geniş ekranda (bilgisayar önizlemesi) telefon genişliğinde göster */
 @media (min-width:560px){body{max-width:440px;margin:0 auto!important;box-shadow:0 0 0 1px var(--line),0 10px 40px rgba(0,0,0,.12)}.sheet{justify-content:center}.panel{max-width:440px}}
@@ -309,6 +309,9 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .tog i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:.2s}
 .tog.on i{background:var(--accent)}
 .tog.on i::after{left:16px}
+.kln{color:var(--kalin)}
+.klg{color:var(--kalin);font-size:.82rem;margin:-4px 0 0;text-align:center}
+.kzbar{display:flex;justify-content:center;margin:-2px 0}
 .seg.mixseg.s3{grid-template-columns:repeat(3,1fr)}
 .kindseg{margin-bottom:2px}
 .kpick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -509,7 +512,7 @@ function cases(c){
 }
 function special(c){
   const x=byChar[c],o=[];
-  if(c==="ا"){o.push("Elif kendisi asla hareke almaz. Üstünde veya altında hareke görürsen orada aslında <b>hemze (ء)</b> vardır: أَ e, إِ i, أُ ü.","Harekesiz elif, kendinden önceki <b>üstünlü</b> harfi uzatır: بَا bâ, قَالَ kâle.","Kelime başındaki آ, hemze ile uzatma elifinin birlikte yazılışıdır; normal uzatma gibi okunur: آمَنَ â-me-ne. Kelime içinde uzatma harfinin üstünde dalga (<b>çeker</b>) varsa daha uzun çekilir: جَآءَ câ-e.","Kelime sonunda tenvin üstünden sonra yazılan elif okunmaz: كِتَابًا kitâben.")}
+  if(c==="ا"){o.push("Elif kendisi asla hareke almaz. Üstünde veya altında hareke görürsen orada aslında <b>hemze (ء)</b> vardır: أَ e, إِ i, أُ ü.","Harekesiz elif, kendinden önceki <b>üstünlü</b> harfi uzatır: بَا bâ, قَالَ kâle.","Kelime başındaki آ, hemze ile uzatma elifinin birlikte yazılışıdır; normal uzatma gibi okunur: آمَنَ â-me-ne. Kelime içinde uzatma harfinin üstünde dalga (<b>çeker</b>) varsa daha uzun çekilir: جَآءَ câ-e.","Kelime sonunda tenvin üstünden sonra yazılan elif okunmaz: كِتَابًا kitâben (durunca kitâbâ).")}
   if(c==="و"){o.push("Harekeli olursa normal <b>v</b> okunur: وَ ve, وِ vi, وُ vü.","Harekesiz vav'dan önceki harf <b>ötreli</b> ise vav uzatma harfidir: بُو bû.","Cezmli vav'dan önceki harf <b>üstünlü</b> ise 'ev' gibi okunur: أَوْ ev, خَوْفٌ havfün.")}
   if(c==="ي"){o.push("Harekeli olursa normal <b>y</b> okunur: يَ ye, يِ yi, يُ yü.","Harekesiz ye'den önceki harf <b>esreli</b> ise ye uzatma harfidir: بِي bî.","Cezmli ye'den önceki harf <b>üstünlü</b> ise 'ey' gibi okunur: أَيْ ey, بَيْتٌ beytün.","Kelime sonunda noktasız yazılırsa (ى) elif gibi uzatır: عَلَى alâ.")}
   if(c==="ر"){o.push("Ra <b>üstün ve ötrede kalın</b> (ra, ru), <b>esrede ince</b> (ri) okunur.","Cezmli Ra'dan önce üstün veya ötre varsa Ra kalın söylenir: أَرْسَلَ er-se-le.")}
@@ -595,11 +598,11 @@ const HK=[
   items:()=>LET.map(c=>[glyph(c,"i"),read(c,"i")])},
  {id:"u",ar:"بُ",ad:"Ötre",t:"Harfin <b>üstüne</b> konan küçük vav (virgül gibi). <b>ü</b> veya <b>u</b> sesi verir. İnce harflerde <b>ü</b> (بُ bü), kalın harflerde <b>u</b> (صُ su) okunur.",
   items:()=>LET.map(c=>[glyph(c,"u"),read(c,"u")])},
- {id:"c",ar:"بْ",ad:"Cezm",t:"Harfin üstündeki küçük <b>halka</b>. Bu harfin sesli harfi <b>yoktur</b>; kendinden önceki harekeli harfle birlikte tek hece okunur: أَبْ <b>eb</b>, مِنْ <b>min</b>, قُلْ <b>kul</b>.",
+ {id:"c",ar:"بْ",ad:"Cezm",t:"Harfin üstündeki küçük <b>halka</b>. Harfi <b>harekesiz</b> okutur: harf okunur ama sesli harf almaz; kendinden önceki harekeli harfle birlikte tek hece okunur: أَبْ <b>eb</b>, مِنْ <b>min</b>, قُلْ <b>kul</b>.",
   items:()=>LETN.map(c=>["أ"+FA+c+SU,preV(c)+byChar[c][3]])},
  {id:"s",ar:"بّ",ad:"Şedde",t:"Harfin üstündeki küçük <b>w</b>. Harf <b>iki kere</b> okunur: önce cezmli, sonra harekeli. أَبَّ <b>eb-be</b>, رَبِّ <b>rab-bi</b>, ثُمَّ <b>süm-me</b>.",
   items:()=>LETN.map(c=>["أ"+FA+c+SH+FA,preV(c)+byChar[c][3]+"-"+read(c,"a")])},
- {id:"tf",ar:"بً",ad:"Tenvin üstün",t:"<b>İki üstün</b>. Sona <b>n</b> ekler: بًا <b>ben</b>. Yanına genelde bir elif yazılır, o elif <b>okunmaz</b>.",
+ {id:"tf",ar:"بً",ad:"Tenvin üstün",t:"<b>İki üstün</b>. Sona <b>n</b> ekler: بًا <b>ben</b>. Yanına genelde bir elif yazılır, o elif <b>okunmaz</b>. Kelimenin sonunda <b>durursan</b> tenvin okunmaz: iki üstün <b>â</b> olur (<bdi class=ar>مَفَازًا</bdi> mefâzâ), iki esre ve iki ötre düşer (<bdi class=ar>مَسَدٍ</bdi> mesed, <bdi class=ar>أَحَدٌ</bdi> ehad).",
   items:()=>LETN.map(c=>[c+TF+"ا",read(c,"a")+"n"])},
  {id:"tk",ar:"بٍ",ad:"Tenvin esre",t:"Altta <b>iki esre</b>. Sona <b>n</b> ekler: بٍ <b>bin</b>, صٍ <b>sın</b>.",
   items:()=>LETN.map(c=>[c+TK,read(c,"i")+"n"])},
@@ -628,11 +631,11 @@ const R=[
  ["Ötre","بُ","Harfin <b>üstünde</b> küçük vav. İnce harflerde <b>ü</b>, kalın harflerde <b>u</b> okunur (ince harfteki ses tam ü değil, ü ile u arasıdır; dinleyerek oturur).",[["بُ","bü"],["سُ","sü"],["كُ","kü"],["صُ","su"],["قُ","ku"],["طُ","tu"]]],
  ["Kalın ve ince harfler","ق",`Şu 7 harf <b>her zaman kalın</b> okunur: <bdi class="ar" style="font-size:1.4rem">خ ص ض ط ظ غ ق</bdi>.<br><b>Ra</b> (<bdi class="ar">ر</bdi>) üstün ve ötrede kalın, esrede incedir. Diğer harfler incedir.<br>Boğaz harfleri <b>Ha</b> (<bdi class="ar">ح</bdi>) ve <b>Ayn</b> (<bdi class="ar">ع</bdi>) kalın değildir; ama Türkçe okunuşta üstünleri <b>a</b> ile okunur: <bdi class="ar">حَ</bdi> ha, <bdi class="ar">عَ</bdi> ‘a. Esreleri <b>i</b>, ötreleri <b>u</b> okunur.`,[["سَ","se"],["صَ","sa"],["كَ","ke"],["قَ","ka"],["رَ","ra"],["رِ","ri"],["حَ","ha"],["حِ","hi"]]],
  ["Hece okuma","كَتَبَ","Harekeli harfler yan yana gelince her biri bir hece olur. Sağdan başlayıp tek tek oku.",[["كَتَبَ","ke-te-be"],["جَلَسَ","ce-le-se"],["ذَهَبَ","ze-he-be"],["سَمِعَ","se-mi-‘a"],["كُتُبُ","kü-tü-bü"]]],
- ["Cezm","بْ","Harfin üstünde küçük <b>halka</b>. Bu harf sesli harf almaz, <b>önceki heceye eklenir</b>.",[["أَبْ","eb"],["مِنْ","min"],["قُلْ","kul"],["لَمْ","lem"],["هُمْ","hüm"]]],
+ ["Cezm","بْ","Harfin üstünde küçük <b>halka</b>. Harfi <b>harekesiz</b> okutur: harf sesli harf almaz, <b>önceki heceye eklenir</b>.",[["أَبْ","eb"],["مِنْ","min"],["قُلْ","kul"],["لَمْ","lem"],["هُمْ","hüm"]]],
  ["Şedde","بّ","Harfin üstünde küçük <b>w</b>. Harf <b>iki kere</b> okunur: biri önceki heceye cezmli eklenir, ikincisi kendi harekesiyle okunur.",[["رَبِّ","rab-bi"],["إِنَّ","in-ne"],["ثُمَّ","süm-me"],["أَبَّ","eb-be"]]],
- ["Tenvin","بٌ","Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> sesi ekler. Tenvin üstünden sonra gelen elif <b>okunmaz</b>.",[["بًا","ben"],["بٍ","bin"],["بٌ","bün"],["قَلَمٌ","ka-le-mün"],["أَحَدٌ","e-ha-dün"]]],
+ ["Tenvin","بٌ","Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> sesi ekler. Tenvin üstünden sonra gelen elif <b>okunmaz</b>. Kelimenin sonunda <b>durursan</b> tenvin okunmaz: iki üstün <b>â</b> olur (<bdi class=ar>مَفَازًا</bdi> mefâzâ), iki esre ve iki ötre düşer (<bdi class=ar>مَسَدٍ</bdi> mesed, <bdi class=ar>أَحَدٌ</bdi> ehad).",[["بًا","ben"],["بٍ","bin"],["بٌ","bün"],["قَلَمٌ","ka-le-mün"],["أَحَدٌ","e-ha-dün"]]],
  ["Uzatma (med) harfleri","ا و ي","<b>Elif, vav, ye</b> harekesiz gelirse önceki sesi uzatır: üstünden sonra elif → <b>â</b>, esreden sonra ye → <b>î</b>, ötreden sonra vav → <b>û</b>. Bir elif miktarı (iki hareke) uzatılır.",[["بَا","bâ"],["بِي","bî"],["بُو","bû"],["قَالَ","kâ-le"],["قِيلَ","kî-le"],["يَقُولُ","ye-kû-lü"]]],
- ["Lin (ev, ey)","أَوْ","Cezmli <b>vav</b> veya <b>ye</b>'den önce <b>üstün</b> gelirse uzatmaz, yumuşak okunur: <b>ev</b>, <b>ey</b>.",[["أَوْ","ev"],["أَيْ","ey"],["خَوْفٌ","hav-fün"],["بَيْتٌ","bey-tün"]]],
+ ["Lin (ev, ey)","أَوْ","Cezmli <b>vav</b> veya <b>ye</b>'den önce <b>üstün</b> gelirse yumuşak okunur: <b>ev</b>, <b>ey</b>. Okumaya devam ederken uzatılmaz; kelimenin sonunda durulursa uzatılır (medd-i lîn). Ne kadar uzatılacağını hocandan dinleyerek öğren.",[["أَوْ","ev"],["أَيْ","ey"],["خَوْفٌ","hav-fün"],["بَيْتٌ","bey-tün"]]],
  ["Çeker (medd işareti)","ـٓ","Uzatma harfinin üstündeki <b>dalga</b> işareti. Normal uzatmadan <b>daha uzun</b> çekilir. Ne kadar çekileceğini hocandan dinleyerek öğrenmek en doğrusudur.<br>Kelime başındaki <span class=\"ar\">آ</span> ise hemze ile elifin birlikte yazılışıdır, <b>normal uzatma</b> gibi okunur: <span class=\"ar\">آمَنَ</span> â-me-ne.",[["جَآءَ","câ-e"],["السَّمَآءِ","es-se-mâ-i"],["سُوٓءَ","sû-e"]]],
  ["Ters harekeler","ـٰ","Hareke <b>dik</b> yazılırsa sesi uzatır. Dik üstün → <b>â</b>, ters esre → <b>î</b>, ters ötre → <b>û</b>.",[["هٰذَا","hâ-zâ"],["بِهٖ","bi-hî"],["لَهٗ","le-hû"]]],
  ["Hemze","ء","Nefesin bir an kesildiği kısa, kesik bir sestir; <b>harekesine göre</b> okunur: أَ e, إِ i, أُ ü. Genelde elif, vav veya ye'nin üstünde/altında yazılır. Harekeli elif aslında hemzedir.",[["أَ","e"],["إِ","i"],["أُ","ü"],["سَأَلَ","se-e-le"],["يُؤْمِنُ","yü’-mi-nü"]]],
@@ -1287,7 +1290,7 @@ const RL=[
   ex:["رَبِّ","إِنَّ","ثُمَّ"],
   words:[["رَبِّ","Rabbim"],["إِنَّ","muhakkak"],["ثُمَّ","sonra"],["كُلُّ","her, hepsi"],["شَدَّ","sıktı, bağladı"],["أُمَّ","anne"],["مُحَمَّدُ","Muhammed"]]},
  {t:"Tenvin",sub:"قَلَمٌ ka-le-mün",ar:"بٌ",kind:"tenvin",
-  rule:"Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> ekler: <span class=\"ar\">بًا</span> ben, <span class=\"ar\">بٍ</span> bin, <span class=\"ar\">بٌ</span> bün.<br>Tenvin üstünden sonra yazılan elif <b>okunmaz</b>.",
+  rule:"Harekenin <b>iki tane</b> yazılmasıdır, sona <b>n</b> ekler: <span class=\"ar\">بًا</span> ben, <span class=\"ar\">بٍ</span> bin, <span class=\"ar\">بٌ</span> bün.<br>Tenvin üstünden sonra yazılan elif <b>okunmaz</b>. Kelimenin sonunda <b>durursan</b> tenvin okunmaz: iki üstün <b>â</b> olur (<span class=\"ar\">مَفَازًا</span> mefâzâ), iki esre ve iki ötre düşer (<span class=\"ar\">مَسَدٍ</span> mesed, <span class=\"ar\">أَحَدٌ</span> ehad).",
   ex:["قَلَمٌ","بَلَدًا","قَمَرٍ"],
   words:[["قَلَمٌ","kalem"],["وَلَدٌ","çocuk"],["أَحَدٌ","bir, tek"],["بَلَدًا","şehir"],["قَمَرٍ","ay"],["شَجَرَةٌ","ağaç"],["رَجُلٌ","adam"],["سَمَكًا","balık"]]},
  {t:"Uzatma (med)",sub:"قَالَ kâ-le",ar:"بَا",kind:"uzatma",
@@ -1645,20 +1648,20 @@ const KR=[
  {id:"u",f:"V",ad:"Üstün",ar:"بَ",etki:"e / a sesi verir",acik:"Harfin üstündeki eğik çizgi. İnce harfte <b>e</b>, kalın harfte <b>a</b> okunur.",g:c=>glyph(c,"a"),r:c=>read(c,"a"),all:1},
  {id:"e",f:"V",ad:"Esre",ar:"بِ",etki:"i / ı sesi verir",acik:"Harfin altındaki eğik çizgi. İnce harfte <b>i</b>, kalın harfte <b>ı</b> okunur.",g:c=>glyph(c,"i"),r:c=>read(c,"i"),all:1},
  {id:"o",f:"V",ad:"Ötre",ar:"بُ",etki:"ü / u sesi verir",acik:"Harfin üstündeki küçük vav. İnce harfte <b>ü</b>, kalın harfte <b>u</b> okunur.",g:c=>glyph(c,"u"),r:c=>read(c,"u"),all:1},
- {id:"c",f:"X",ad:"Cezm",ar:"بْ",etki:"sesi yoktur, önceki heceye eklenir",acik:"Harfin üstündeki küçük halka. Harf sesli harf almaz, önceki heceye eklenir: أَبْ <b>eb</b>.",g:c=>"أ"+FA+c+SU,s:c=>c+SU,r:c=>preV(c)+byChar[c][3]},
+ {id:"c",f:"X",ad:"Cezm",ar:"بْ",etki:"harfi harekesiz okutur, öncekine bağlar",acik:"Harfin üstündeki küçük halka. Harf okunur ama <b>harekesiz</b> okunur (sesli harf almaz); önceki harekeli harfe bağlanır: أَبْ <b>eb</b>.",g:c=>"أ"+FA+c+SU,s:c=>c+SU,r:c=>preV(c)+byChar[c][3]},
  {id:"s",f:"X",ad:"Şedde",ar:"بّ",etki:"harfi iki kez okutur",acik:"Harfin üstündeki küçük w. Harf iki kez okunur: biri önceki heceye eklenir, biri kendi harekesiyle okunur: أَبَّ <b>eb-be</b>.",g:c=>"أ"+FA+c+SH+FA,s:c=>c+SH+FA,r:c=>preV(c)+byChar[c][3]+"-"+read(c,"a")},
- {id:"tf",f:"T",ad:"Tenvin üstün",ar:"بًا",etki:"sona n ekler: en / an",acik:"İki üstün. Sona <b>n</b> ekler; yanındaki elif okunmaz: بًا <b>ben</b>.",g:c=>c+TF+"ا",r:c=>read(c,"a")+"n"},
- {id:"tk",f:"T",ad:"Tenvin esre",ar:"بٍ",etki:"sona n ekler: in / ın",acik:"Altta iki esre. Sona <b>n</b> ekler: بٍ <b>bin</b>.",g:c=>c+TK,r:c=>read(c,"i")+"n"},
- {id:"td",f:"T",ad:"Tenvin ötre",ar:"بٌ",etki:"sona n ekler: ün / un",acik:"Üstte iki ötre. Sona <b>n</b> ekler: بٌ <b>bün</b>.",g:c=>c+TD,r:c=>read(c,"u")+"n"},
+ {id:"tf",f:"T",ad:"Tenvin üstün",ar:"بًا",etki:"sona n ekler: en / an",acik:"İki üstün. Sona <b>n</b> ekler; yanındaki elif okunmaz: بًا <b>ben</b>. Kelime sonunda durursan n okunmaz, <b>â</b> diye uzatılır: <bdi class=ar>مَفَازًا</bdi> mefâzâ.",g:c=>c+TF+"ا",r:c=>read(c,"a")+"n"},
+ {id:"tk",f:"T",ad:"Tenvin esre",ar:"بٍ",etki:"sona n ekler: in / ın",acik:"Altta iki esre. Sona <b>n</b> ekler: بٍ <b>bin</b>. Kelime sonunda durursan n ve esre düşer: <bdi class=ar>مَسَدٍ</bdi> mesed.",g:c=>c+TK,r:c=>read(c,"i")+"n"},
+ {id:"td",f:"T",ad:"Tenvin ötre",ar:"بٌ",etki:"sona n ekler: ün / un",acik:"Üstte iki ötre. Sona <b>n</b> ekler: بٌ <b>bün</b>. Kelime sonunda durursan n ve ötre düşer: <bdi class=ar>أَحَدٌ</bdi> ehad.",g:c=>c+TD,r:c=>read(c,"u")+"n"},
  {id:"ma",f:"M",ad:"Uzatma (elif)",ar:"بَا",etki:"üstünü uzatır: â",acik:"Üstünlü harften sonra gelen harekesiz <b>elif</b> sesi uzatır: بَا <b>bâ</b>.",g:c=>c+FA+"ا",r:c=>byChar[c][3]+"â"},
  {id:"my",f:"M",ad:"Uzatma (ye)",ar:"بِي",etki:"esreyi uzatır: î",acik:"Esreli harften sonra gelen harekesiz <b>ye</b> sesi uzatır: بِي <b>bî</b>.",g:c=>c+KE+"ي",r:c=>byChar[c][3]+"î"},
  {id:"mv",f:"M",ad:"Uzatma (vav)",ar:"بُو",etki:"ötreyi uzatır: û",acik:"Ötreli harften sonra gelen harekesiz <b>vav</b> sesi uzatır: بُو <b>bû</b>.",g:c=>c+DA+"و",r:c=>byChar[c][3]+"û"},
 ];
 const KRby=Object.fromEntries(KR.map(r=>[r.id,r]));
 const KTYPES=[["etki","Ne okutur?"],["ad","Adı ne?"],["oku","Nasıl okunur?"],["ters","Hangisi yazılır?"]];
-let kSel=new Set(["u","e","o"]),kTarget=3,kType="oku",kAns="sec",kz=null,kzView=null,kzTimer=null,kzCur=null;
-try{const s=JSON.parse(localStorage.getItem("elifba-kural")||"null");if(s){kSel=new Set(s.sel||["u","e","o"]);kTarget=s.target||3;kType=s.type||"oku";kAns=s.ans||"sec";kz=s.session||null}}catch(e){}
-const saveKz=()=>{try{localStorage.setItem("elifba-kural",JSON.stringify({sel:[...kSel],target:kTarget,type:kType,ans:kAns,session:kz}))}catch(e){}};
+let kRed=true,kSel=new Set(["u","e","o"]),kTarget=3,kType="oku",kAns="sec",kz=null,kzView=null,kzTimer=null,kzCur=null;
+try{const s=JSON.parse(localStorage.getItem("elifba-kural")||"null");if(s){kSel=new Set(s.sel||["u","e","o"]);kTarget=s.target||3;kType=s.type||"oku";kAns=s.ans||"sec";kz=s.session||null;if(s.red===false)kRed=false}}catch(e){}
+const saveKz=()=>{try{localStorage.setItem("elifba-kural",JSON.stringify({sel:[...kSel],target:kTarget,type:kType,ans:kAns,session:kz,red:kRed}))}catch(e){}};
 const kzMastered=k=>k.rules.filter(r=>(k.st[r]||0)>=k.target).length;
 const kzNorm=s=>s.toLocaleLowerCase("tr").replace(/[‘’'`´\s\-.]/g,"").replace(/â/g,"aa").replace(/î/g,"ii").replace(/û/g,"uu");
 const swapFirstV=s=>{const m=s.match(/[eaiıüu]/);return m?s.slice(0,m.index)+SWAP[m[0]]+s.slice(m.index+1):null};
@@ -1688,7 +1691,8 @@ function kzPick(box){
    <div class="subopt"><p class="lbl">Soru türü</p>
      <div class="seg ktype">${KTYPES.map(([k,t])=>`<button data-kt="${k}" class="${k===kType?"sel":""}">${t}</button>`).join("")}</div>
      ${kType==="oku"?`<div class="seg">${[["sec","Seçerek"],["yaz","Yazarak"]].map(([k,t])=>`<button data-ka="${k}" class="${k===kAns?"sel":""}">${t}</button>`).join("")}</div>`:""}
-     <div class="demo">${kzDemo()}</div></div>
+     <div class="demo">${kzDemo()}</div>
+     <button class="tog ${kRed?"on":""}" id="kzRedP" type="button"><i></i>Kalın harfleri kırmızı göster (alışınca kapatabilirsin)</button></div>
    <button class="btn pri" id="kzStart" ${n<1?"disabled":""}>${n<1?"En az 1 kural seç":`Başla · ${n} kural`}</button>`;
   bindKind(box);
   const re=()=>{saveKz();kzPick(box)};
@@ -1699,6 +1703,7 @@ function kzPick(box){
   box.querySelectorAll("[data-ktg]").forEach(b=>b.onclick=()=>{kTarget=+b.dataset.ktg;re()});
   box.querySelectorAll("[data-kt]").forEach(b=>b.onclick=()=>{kType=b.dataset.kt;re()});
   box.querySelectorAll("[data-ka]").forEach(b=>b.onclick=()=>{kAns=b.dataset.ka;re()});
+  box.querySelector("#kzRedP").onclick=()=>{kRed=!kRed;re()};
   const r=box.querySelector("#kzResume");if(r)r.onclick=()=>{kzView="run";renderKural(box);document.querySelector("main").scrollTop=0};
   box.querySelector("#kzStart").onclick=()=>kzNew([...kSel]);
 }
@@ -1708,10 +1713,28 @@ function kzNew(rules){
 }
 function kzStrip(k){return `<div class="ezstrip">${k.rules.map(id=>{const s=Math.min(k.st[id]||0,k.target);
   return `<div class="ezc ${s>=k.target?"m":""}"><span class="ar">${KRby[id].ar}</span><span class="pips">${Array.from({length:k.target},(_,i)=>`<i class="${i<s?"f":""}"></i>`).join("")}</span></div>`}).join("")}</div>`}
+// Kalın harfleri kırmızı göster: yalnız 7 kalın harf; Ra sadece kalın okunduğu yerde (esre, tenvin esre, ye ile uzatmada ince)
+const kzRedOn=(c,id)=>KALIN.includes(c)||(c==="ر"&&!["e","tk","my"].includes(id));
+function kzPaint(g,c,id){
+  if(!kRed||!kzRedOn(c,id))return g;
+  if(g.startsWith("أ"+FA))return "أ"+FA+`<span class="kln">${g.slice(2)}</span>`; // elif sonrakine bitişmez, renk bitişmeyi bozmaz
+  return `<span class="kln">${g}</span>`;
+}
+function kzDraw(box){ // kırmızı ayarı değişince soruyu değiştirmeden yeniden çiz
+  const Z=kzCur;if(!Z)return;
+  const red=kRed&&(Z.type==="ters"?Object.values(Z.gRule).some(id=>kzRedOn(Z.c,id)):kzRedOn(Z.c,Z.id));
+  const lg=red?`<p class="klg">Kırmızı harf <b>kalın</b> okunur: a · ı · u</p>`:"";
+  box.querySelector("#kzShow").innerHTML=Z.type==="ters"?`<div class="qname">${Z.rd}</div><p class="qpos">${byChar[Z.c][1]} harfi</p>${lg}`
+    :`<div class="qglyph ar">${kzPaint(Z.type==="oku"?Z.g:Z.gs,Z.c,Z.id)}</div>${lg}`;
+  if(Z.type==="ters")box.querySelectorAll("#kzOpts button").forEach(b=>b.innerHTML=kzPaint(b.dataset.v,Z.c,Z.gRule[b.dataset.v]));
+  box.querySelectorAll(".fb .kex").forEach(e=>e.innerHTML=kzPaint(e.dataset.g,Z.c,e.dataset.r));
+  const t=box.querySelector("#kzRed");if(t)t.classList.toggle("on",kRed);
+}
 function kzShell(box){
   box.innerHTML=`<div class="ltop"><button class="btn sm" id="kzBack">‹ Seçim</button><span style="flex:1" id="kzCount"></span><span id="kzScore" style="font-variant-numeric:tabular-nums"></span></div>
    <div class="bar ezbar" style="height:8px;margin:0"><i id="kzBar"></i></div>
    <div class="ezstrip"></div>
+   <div class="kzbar"><button class="tog" id="kzRed" type="button"><i></i>Kalın harfleri kırmızı göster</button></div>
    <div class="quiz ezq" id="kzCard">
      <div class="qhead"><p class="qask" id="kzAsk"></p><button class="btn sm" id="kzSkip" type="button" hidden>Bilmiyorum</button></div>
      <div id="kzShow"></div>
@@ -1727,6 +1750,7 @@ function kzShell(box){
     const a=kzNorm(t),b=kzNorm(kzCur.ans),okT=a===b||(BOGAZ.includes(kzCur.c)&&vfold(a)===vfold(b))||(kzCur.c==="ر"&&raV(a,b));
     kzJudge(box,okT?kzCur.ans:null,t,null)};
   box.querySelector("#kzBack").onclick=()=>{ezLeave();kzView="pick";renderKural(box)};
+  box.querySelector("#kzRed").onclick=()=>{kRed=!kRed;saveKz();kzDraw(box)};
   box.querySelector("#kzNext").onclick=nextNow;
   box.querySelector("#kzCheck").onclick=()=>{submit();inp.focus()};
   inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.keyCode===13){ev.preventDefault();submit()}});
@@ -1755,7 +1779,7 @@ function kzRun(box){
   const R=KRby[id],type=k.type,c=type==="ters"?LETN[Math.random()*LETN.length|0]:letterFor(R);
   if(!box.querySelector("#kzCard"))kzShell(box);
   let ask,show,ans,opts=[],glyphs=false,mode="opts";
-  const g=R.g(c),rd=R.r(c),gs=R.s?R.s(c):g;
+  const g=R.g(c),rd=R.r(c),gs=R.s?R.s(c):g,gRule={[g]:id};
   if(type==="etki"){ask="Bu işaret ne okutur?";show=`<div class="qglyph ar">${gs}</div>`;ans=R.etki;
     opts=[ans,...famOrder(R).map(o=>o.etki)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,4)}
   else if(type==="ad"){ask="Bu işaretin adı ne?";show=`<div class="qglyph ar">${gs}</div>`;ans=R.ad;
@@ -1766,17 +1790,17 @@ function kzRun(box){
     const cands=[sw,...famOrder(R).filter(o=>o.all||c!=="ا").map(o=>o.r(c))];
     opts=[ans];for(const v of cands)if(v&&opts.length<4&&!opts.includes(v)&&okD(c,v,ans))opts.push(v)}
   else{ask="Hangisi böyle okunur?";show=`<div class="qname">${rd}</div><p class="qpos">${byChar[c][1]} harfi</p>`;ans=g;glyphs=true;
-    opts=[g];for(const o of famOrder(R)){if(opts.length>=4)break;if(!o.all&&c==="ا")continue;const og=o.g(c);if(o.r(c)!==rd&&!opts.includes(og))opts.push(og)}}
-  kzCur={id,c,ans,rd,g,mode,answered:false,k};
+    opts=[g];for(const o of famOrder(R)){if(opts.length>=4)break;if(!o.all&&c==="ا")continue;const og=o.g(c);if(o.r(c)!==rd&&!opts.includes(og)){opts.push(og);gRule[og]=o.id}}}
+  kzCur={id,c,ans,rd,g,gs,type,gRule,mode,answered:false,k};
   kzHead(box,k);
   box.querySelector("#kzAsk").textContent=ask;
-  box.querySelector("#kzShow").innerHTML=show;
   const O=box.querySelector("#kzOpts");O.hidden=mode!=="opts";O.className="opts"+(glyphs?" glyphs":"")+(type==="etki"?" kwide":"");
   O.innerHTML=mode==="opts"?shuffle(opts).map(v=>`<button data-v="${esc(v)}">${v}</button>`).join(""):"";
   const T=box.querySelector("#kzType"),inp=box.querySelector("#kzIn");T.hidden=mode!=="type";inp.value="";inp.className="kbin";
   box.querySelector("#kzCheck").textContent="Kontrol";
   box.querySelector("#kzNext").hidden=true;box.querySelector("#kzSkip").hidden=mode!=="type";
   box.querySelector(".fb").innerHTML="";
+  kzDraw(box);
   if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}else if(document.activeElement===inp)inp.blur();
 }
 function kzJudge(box,v,typed,btn){
@@ -1788,11 +1812,11 @@ function kzJudge(box,v,typed,btn){
   k.asked++;
   const fb=box.querySelector(".fb");
   const hn=harfNot(Z.c,{u:"a",tf:"a",ma:"a",e:"i",tk:"i",my:"i",o:"u",td:"u",mv:"u",c:"c",s:"c"}[Z.id]),thick=hn?" "+hn:"";
-  const ex=`<span class="ar" style="font-size:1.5rem">${Z.g}</span> = <b>${Z.rd}</b>`;
+  const ex=`<span class="ar kex" style="font-size:1.5rem" data-g="${esc(Z.g)}" data-r="${Z.id}">${kzPaint(Z.g,Z.c,Z.id)}</span> = <b>${Z.rd}</b>`;
   if(ok){k.right++;k.st[Z.id]=(k.st[Z.id]||0)+1;buzz(25);const s=k.st[Z.id];fb.style.color="var(--good)";
     fb.innerHTML=s>=k.target?`✓ Doğru! ${R.ad} ezberlendi.<small>${ex}</small>`:`✓ Doğru!<small>${R.ad} · ${ex} · ${s} / ${k.target}</small>`}
   else{k.st[Z.id]=0;k.ms[Z.id]=(k.ms[Z.id]||0)+1;buzz([60,60,60]);fb.style.color="var(--bad)";
-    const shownAns=Z.mode==="type"||k.type!=="ters"?Z.ans:`<span class="ar" style="font-size:1.6rem">${Z.ans}</span>`;
+    const shownAns=Z.mode==="type"||k.type!=="ters"?Z.ans:`<span class="ar kex" style="font-size:1.6rem" data-g="${esc(Z.ans)}" data-r="${Z.id}">${kzPaint(Z.ans,Z.c,Z.id)}</span>`;
     fb.innerHTML=`${v||typed?"✗ Yanlış.":"Cevap:"} Doğrusu: ${shownAns}<small><b>${R.ad}:</b> ${R.acik}<br>Bu harfle: ${ex}.${thick}${typed?`<br>Yazdığın: "${esc(typed)}"`:""}</small>`}
   saveKz();kzHead(box,k);
   if(ok){kzTimer=setTimeout(()=>{if(learnView==="ezber"&&ezKind==="kural"&&kzView==="run"&&kz===k)kzRun(box)},900);return}
