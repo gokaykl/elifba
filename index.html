@@ -313,6 +313,7 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .klg{color:var(--kalin);font-size:.82rem;margin:-4px 0 0;text-align:center}
 .kzbar{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;margin:-2px 0}
 .reveal{width:100%;min-height:128px;border:2px dashed var(--line);border-radius:14px;background:var(--accent-soft);color:var(--ink);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.cover{align-self:center}
 .reveal b{font-size:1.05rem}.reveal span{font-size:.85rem;color:var(--muted)}
 .seg.mixseg.s3{grid-template-columns:repeat(3,1fr)}
 .kindseg{margin-bottom:2px}
@@ -447,7 +448,10 @@ const BOGAZ="حع"; // kalın değil; Türkçe okunuşta üstünü a, esresi i, 
 const vfold=s=>s.replace(/e/g,"a").replace(/ı/g,"i").replace(/ü/g,"u");
 // Ha / Ayn'da e-a, i-ı, u-ü farkı kaynaklara göre değişebildiği için bunlar yanlış şık yapılmaz
 const raV=(x,a)=>/^[ea]r/.test(x)&&/^[ea]r/.test(a)&&x.slice(1)===a.slice(1); // أَرْ er / ar
-const okD=(c,x,ans)=>x!==ans&&!(BOGAZ.includes(c)&&vfold(x)===vfold(ans))&&!(c==="ر"&&raV(x,ans));
+// Cezm/şeddede öndeki hemzeli üstün: kalın harf, Ha, Ayn ve Ra önünde kaynakta "a" (at-ta, ashâb), Ra'da "e" (er-ra);
+// öbürü de okunduğu için (et-ta / ar-ra) yanlış sayılmaz, yanlış şık da yapılmaz
+const preVar=(c,id,x,a)=>(id==="c"||id==="s")&&(KALIN.includes(c)||BOGAZ.includes(c)||c==="ر")&&/^[ea]/.test(x)&&/^[ea]/.test(a)&&x[0]!==a[0]&&x.slice(1)===a.slice(1);
+const okD=(c,x,ans,id)=>x!==ans&&!(BOGAZ.includes(c)&&vfold(x)===vfold(ans))&&!(c==="ر"&&raV(x,ans))&&!(id&&preVar(c,id,x,ans));
 function harfNot(c,h){ // h: a,i,u ya da "c" (önünde üstün olan cezm/şedde)
   const n=byChar[c][1];
   if(KALIN.includes(c))return `<b>${n}</b> kalın harftir.`;
@@ -1040,6 +1044,7 @@ function ezBuildShell(box){
      <div id="ezShow"></div>
      ${revealBtn("ezReveal")}
      <div class="opts" id="ezOpts" hidden></div>
+     <button class="btn sm cover" id="ezCover" type="button" hidden>Şıkları kapat</button>
      <div class="typein" id="ezType" hidden><input id="ezIn" class="kbin" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Harfin adını yaz"><button class="btn pri" id="ezCheck" type="button">Kontrol</button></div>
      <div class="kbbar" id="ezKbBar" hidden><button class="tog" id="ezAuto" type="button"><i></i>Her soruda karıştır</button><span style="flex:1"></span><button class="btn sm" id="ezShuffle" type="button">Karıştır</button><button class="btn sm" id="ezFix" type="button">Düzelt</button></div>
      <div class="kb" id="ezKb" hidden>${L.map(x=>`<button data-v="${x[0]}">${x[0]}</button>`).join("")}</div>
@@ -1057,9 +1062,10 @@ function ezBuildShell(box){
     const r=nameMatch(t,ezCur.c);ezJudge(box,r.letter,t,null,r.typo);
   }
   box.querySelector("#ezBack").onclick=()=>{ezLeave();ezView="pick";renderEzber(box)};
-  const ezV=()=>veil(box,ezCur,box.querySelector("#ezOpts"),box.querySelector("#ezReveal"),box.querySelector("#ezHide"));
-  box.querySelector("#ezHide").onclick=()=>{optHide=!optHide;saveHide();if(ezCur&&!optHide)ezCur.shown=true;ezV()};
+  const ezV=()=>veil(box,ezCur,"ez");
+  box.querySelector("#ezHide").onclick=()=>{optHide=!optHide;saveHide();if(ezCur)ezCur.shown=false;ezV()};
   box.querySelector("#ezReveal").onclick=()=>{if(ezCur)ezCur.shown=true;ezV();buzz(10)};
+  box.querySelector("#ezCover").onclick=()=>{if(ezCur)ezCur.shown=false;ezV()};
   box.querySelector("#ezNext").onclick=nextNow;
   const K0=box.querySelector("#ezKb");
   box.querySelector("#ezShuffle").onclick=()=>{shuffle([...K0.children]).forEach(b=>K0.appendChild(b));buzz(15)};
@@ -1121,7 +1127,7 @@ function ezRun(box){
   box.querySelector("#ezSkip").hidden=!yaz;
   box.querySelector("#ezCard").classList.toggle("yaz",yaz);
   box.querySelector(".fb").innerHTML="";
-  veil(box,ezCur,O,box.querySelector("#ezReveal"),box.querySelector("#ezHide"));
+  veil(box,ezCur,"ez");
   if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}
   else if(document.activeElement===inp)inp.blur();
 }
@@ -1134,7 +1140,7 @@ function ezUpdateHead(box,e){
   const f=box.querySelector(".ezstrip .ezc:not(.m)");if(f){try{f.scrollIntoView({inline:"nearest",block:"nearest"})}catch(_){}}
 }
 function ezJudge(box,o,typed,btn,typo){
-  const Z=ezCur;if(!Z||Z.answered)return;Z.answered=true;
+  const Z=ezCur;if(!Z||Z.answered)return;Z.answered=true;veil(box,Z,"ez");
   const e=Z.e,c=Z.c,ok=o===c;
   box.querySelectorAll("#ezOpts button,#ezKb button").forEach(x=>{x.disabled=true;if(x.dataset.v===c)x.classList.add("ok","pop")});
   if(btn&&!ok)btn.classList.add("no");
@@ -1729,10 +1735,12 @@ function kzStrip(k){return `<div class="ezstrip">${k.rules.map(id=>{const s=Math
 let optHide=false;try{optHide=localStorage.getItem("elifba-gizle")==="1"}catch(e){}
 const saveHide=()=>{try{localStorage.setItem("elifba-gizle",optHide?"1":"0")}catch(e){}};
 const revealBtn=id=>`<button class="reveal" id="${id}" type="button" hidden><b>Önce aklından tahmin et</b><span>Sonra dokun, şıkları aç</span></button>`;
-function veil(box,Z,O,R,T){ // Z: geçerli soru, O: şıklar, R: aç düğmesi, T: ayar düğmesi
-  if(!Z)return;const on=optHide&&Z.mode==="opts"&&!Z.answered&&!Z.shown;
-  O.hidden=Z.mode!=="opts"||on;R.hidden=!on;
-  if(T){T.classList.toggle("on",optHide);T.hidden=Z.mode!=="opts"}
+function veil(box,Z,pre){ // pre: "ez" ya da "kz"; şıklar, aç kutusu, kapat düğmesi, ayar düğmesi
+  if(!Z)return;const q=id=>box.querySelector("#"+pre+id);
+  const opt=Z.mode==="opts",hideNow=optHide&&opt&&!Z.answered&&!Z.shown;
+  q("Opts").hidden=!opt||hideNow;q("Reveal").hidden=!hideNow;
+  q("Cover").hidden=!(optHide&&opt&&!Z.answered&&Z.shown); // açtıktan sonra tekrar kapatabilsin
+  const T=q("Hide");T.classList.toggle("on",optHide);T.hidden=!opt;
 }
 // Kalın harfleri kırmızı göster: yalnız 7 kalın harf; Ra sadece kalın okunduğu yerde (esre, tenvin esre, ye ile uzatmada ince)
 const kzRedOn=(c,id)=>KALIN.includes(c)||(c==="ر"&&!["e","tk","my"].includes(id));
@@ -1743,10 +1751,12 @@ function kzPaint(g,c,id){
 }
 function kzDraw(box){ // kırmızı ayarı değişince soruyu değiştirmeden yeniden çiz
   const Z=kzCur;if(!Z)return;
-  const red=kRed&&(Z.type==="ters"?Object.values(Z.gRule).some(id=>kzRedOn(Z.c,id)):kzRedOn(Z.c,Z.id));
+  // tek başına رْ (önünde harf yok): sakin Ra'nın kalınlığı öncekine bağlı, boyanmaz
+  const alone=(Z.type==="etki"||Z.type==="ad")&&Z.c==="ر"&&Z.id==="c";
+  const red=kRed&&!alone&&(Z.type==="ters"?Object.values(Z.gRule).some(id=>kzRedOn(Z.c,id)):kzRedOn(Z.c,Z.id));
   const lg=red?`<p class="klg">Kırmızı harf <b>kalın</b> okunur: a · ı · u</p>`:"";
   box.querySelector("#kzShow").innerHTML=Z.type==="ters"?`<div class="qname">${Z.rd}</div><p class="qpos">${byChar[Z.c][1]} harfi</p>${lg}`
-    :`<div class="qglyph ar">${kzPaint(Z.type==="oku"?Z.g:Z.gs,Z.c,Z.id)}</div>${lg}`;
+    :`<div class="qglyph ar">${alone?Z.gs:kzPaint(Z.type==="oku"?Z.g:Z.gs,Z.c,Z.id)}</div>${lg}`;
   if(Z.type==="ters")box.querySelectorAll("#kzOpts button").forEach(b=>b.innerHTML=kzPaint(b.dataset.v,Z.c,Z.gRule[b.dataset.v]));
   box.querySelectorAll(".fb .kex").forEach(e=>e.innerHTML=kzPaint(e.dataset.g,Z.c,e.dataset.r));
   const t=box.querySelector("#kzRed");if(t)t.classList.toggle("on",kRed);
@@ -1761,6 +1771,7 @@ function kzShell(box){
      <div id="kzShow"></div>
      ${revealBtn("kzReveal")}
      <div class="opts" id="kzOpts"></div>
+     <button class="btn sm cover" id="kzCover" type="button" hidden>Şıkları kapat</button>
      <div class="typein" id="kzType" hidden><input id="kzIn" class="kbin" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Okunuşunu yaz (â için aa)"><button class="btn pri" id="kzCheck" type="button">Kontrol</button></div>
      <div class="fb" aria-live="polite"></div>
      <button class="btn pri" id="kzNext" type="button" hidden style="width:100%">Devam et ›</button>
@@ -1769,13 +1780,14 @@ function kzShell(box){
   ["pointerdown","mousedown"].forEach(t=>{box.querySelector("#kzCheck").addEventListener(t,ev=>{if(!box.querySelector("#kzType").hidden)ev.preventDefault()});box.querySelector("#kzSkip").addEventListener(t,ev=>{if(!box.querySelector("#kzType").hidden)ev.preventDefault()})});
   const nextNow=()=>{clearTimeout(kzTimer);if(learnView==="ezber"&&ezKind==="kural"&&kzView==="run")kzRun(box)};
   const submit=()=>{if(!kzCur)return;if(kzCur.answered)return nextNow();const t=inp.value.trim();if(!t){inp.focus();return}
-    const a=kzNorm(t),b=kzNorm(kzCur.ans),okT=a===b||(BOGAZ.includes(kzCur.c)&&vfold(a)===vfold(b))||(kzCur.c==="ر"&&raV(a,b));
-    kzJudge(box,okT?kzCur.ans:null,t,null)};
+    const a=kzNorm(t),b=kzNorm(kzCur.ans),same=a===b,alt=!same&&((BOGAZ.includes(kzCur.c)&&vfold(a)===vfold(b))||preVar(kzCur.c,kzCur.id,a,b));
+    kzJudge(box,same||alt?kzCur.ans:null,t,null,alt)};
   box.querySelector("#kzBack").onclick=()=>{ezLeave();kzView="pick";renderKural(box)};
   box.querySelector("#kzRed").onclick=()=>{kRed=!kRed;saveKz();kzDraw(box)};
-  const kzV=()=>veil(box,kzCur,box.querySelector("#kzOpts"),box.querySelector("#kzReveal"),box.querySelector("#kzHide"));
-  box.querySelector("#kzHide").onclick=()=>{optHide=!optHide;saveHide();if(kzCur&&!optHide)kzCur.shown=true;kzV()};
+  const kzV=()=>veil(box,kzCur,"kz");
+  box.querySelector("#kzHide").onclick=()=>{optHide=!optHide;saveHide();if(kzCur)kzCur.shown=false;kzV()};
   box.querySelector("#kzReveal").onclick=()=>{if(kzCur)kzCur.shown=true;kzV();buzz(10)};
+  box.querySelector("#kzCover").onclick=()=>{if(kzCur)kzCur.shown=false;kzV()};
   box.querySelector("#kzNext").onclick=nextNow;
   box.querySelector("#kzCheck").onclick=()=>{submit();inp.focus()};
   inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.keyCode===13){ev.preventDefault();submit()}});
@@ -1813,7 +1825,7 @@ function kzRun(box){
     if(k.ans==="yaz")mode="type";
     const sw=swapFirstV(rd);
     const cands=[sw,...famOrder(R).filter(o=>o.all||c!=="ا").map(o=>o.r(c))];
-    opts=[ans];for(const v of cands)if(v&&opts.length<4&&!opts.includes(v)&&okD(c,v,ans))opts.push(v)}
+    opts=[ans];for(const v of cands)if(v&&opts.length<4&&!opts.includes(v)&&okD(c,v,ans,id))opts.push(v)}
   else{ask="Hangisi böyle okunur?";show=`<div class="qname">${rd}</div><p class="qpos">${byChar[c][1]} harfi</p>`;ans=g;glyphs=true;
     opts=[g];for(const o of famOrder(R)){if(opts.length>=4)break;if(!o.all&&c==="ا")continue;const og=o.g(c);if(o.r(c)!==rd&&!opts.includes(og)){opts.push(og);gRule[og]=o.id}}}
   kzCur={id,c,ans,rd,g,gs,type,gRule,mode,answered:false,k};
@@ -1826,11 +1838,11 @@ function kzRun(box){
   box.querySelector("#kzNext").hidden=true;box.querySelector("#kzSkip").hidden=mode!=="type";
   box.querySelector(".fb").innerHTML="";
   kzDraw(box);
-  veil(box,kzCur,O,box.querySelector("#kzReveal"),box.querySelector("#kzHide"));
+  veil(box,kzCur,"kz");
   if(mode==="type"){try{inp.focus({preventScroll:true})}catch(_){}}else if(document.activeElement===inp)inp.blur();
 }
-function kzJudge(box,v,typed,btn){
-  const Z=kzCur;if(!Z||Z.answered)return;Z.answered=true;
+function kzJudge(box,v,typed,btn,alt){
+  const Z=kzCur;if(!Z||Z.answered)return;Z.answered=true;veil(box,Z,"kz");
   const k=Z.k,R=KRby[Z.id],ok=v===Z.ans;
   box.querySelectorAll("#kzOpts button").forEach(x=>{x.disabled=true;if(x.dataset.v===Z.ans)x.classList.add("ok","pop")});
   if(btn&&!ok)btn.classList.add("no");
@@ -1840,11 +1852,13 @@ function kzJudge(box,v,typed,btn){
   const hn=harfNot(Z.c,{u:"a",tf:"a",ma:"a",e:"i",tk:"i",my:"i",o:"u",td:"u",mv:"u",c:"c",s:"c"}[Z.id]),thick=hn?" "+hn:"";
   const ex=`<span class="ar kex" style="font-size:1.5rem" data-g="${esc(Z.g)}" data-r="${Z.id}">${kzPaint(Z.g,Z.c,Z.id)}</span> = <b>${Z.rd}</b>`;
   if(ok){k.right++;k.st[Z.id]=(k.st[Z.id]||0)+1;buzz(25);const s=k.st[Z.id];fb.style.color="var(--good)";
-    fb.innerHTML=s>=k.target?`✓ Doğru! ${R.ad} ezberlendi.<small>${ex}</small>`:`✓ Doğru!<small>${R.ad} · ${ex} · ${s} / ${k.target}</small>`}
+    const not=alt?`<br><b>Not:</b> ${Z.g.length?`<span class="ar kex" style="font-size:1.3rem" data-g="${esc(Z.g)}" data-r="${Z.id}">${kzPaint(Z.g,Z.c,Z.id)}</span> `:""}<b>${Z.rd}</b> okutur. Yazdığın "${esc(typed)}" okunuşu da kullanılıyor, doğru sayıldı.`:"";
+    fb.innerHTML=s>=k.target?`✓ Doğru! ${R.ad} ezberlendi.<small>${ex}${not}</small>`:`✓ Doğru!<small>${R.ad} · ${ex} · ${s} / ${k.target}${not}</small>`}
   else{k.st[Z.id]=0;k.ms[Z.id]=(k.ms[Z.id]||0)+1;buzz([60,60,60]);fb.style.color="var(--bad)";
     const shownAns=Z.mode==="type"||k.type!=="ters"?Z.ans:`<span class="ar kex" style="font-size:1.6rem" data-g="${esc(Z.ans)}" data-r="${Z.id}">${kzPaint(Z.ans,Z.c,Z.id)}</span>`;
     fb.innerHTML=`${v||typed?"✗ Yanlış.":"Cevap:"} Doğrusu: ${shownAns}<small><b>${R.ad}:</b> ${R.acik}<br>Bu harfle: ${ex}.${thick}${typed?`<br>Yazdığın: "${esc(typed)}"`:""}</small>`}
   saveKz();kzHead(box,k);
+  if(ok&&alt){box.querySelector("#kzSkip").hidden=true;box.querySelector("#kzCheck").textContent="Devam ›";return} // notu okusun diye bekle
   if(ok){kzTimer=setTimeout(()=>{if(learnView==="ezber"&&ezKind==="kural"&&kzView==="run"&&kz===k)kzRun(box)},900);return}
   box.querySelector("#kzSkip").hidden=true;
   if(Z.mode==="type")box.querySelector("#kzCheck").textContent="Devam ›";
