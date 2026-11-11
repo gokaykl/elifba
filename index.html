@@ -161,6 +161,11 @@ section{display:flex;flex-direction:column;gap:18px}
 .forms4 div{direction:ltr;border:1px solid var(--line);border-radius:12px;text-align:center;padding:2px 2px 6px;background:var(--surface)}
 .forms4 .ar{font-size:2.6rem;display:block;line-height:1.7;color:var(--accent)}
 .forms4 small{color:var(--muted);font-size:.78rem;font-weight:500}
+.forms4 div.me{border:2px solid var(--accent);background:var(--accent-soft)}
+.fb .fam,.fb .forms4{width:100%;max-width:440px;margin:4px 0}
+.fb .fam small,.fb .forms4 small{font-weight:400}
+.fb .fam,.fb .forms4{color:var(--ink)}
+.fb .fam b{font-size:.9rem}
 .join{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:rtl}
 .join div{direction:ltr;border:1px dashed var(--line);border-radius:12px;text-align:center;padding:2px 2px 6px}
 .join .ar{font-size:2.3rem;display:block;line-height:1.8}
@@ -316,7 +321,7 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .cover{align-self:center}
 .reveal b{font-size:1.05rem}.reveal span{font-size:.85rem;color:var(--muted)}
 .seg.mixseg.s3{grid-template-columns:repeat(3,1fr)}
-.kindseg{margin-bottom:2px}
+.kindseg{margin-bottom:2px;grid-template-columns:repeat(3,1fr)}
 .kpick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .kpick button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:0 2px 6px;display:flex;flex-direction:column;align-items:center;position:relative}
 .kpick .ar{font-size:1.8rem;line-height:1.8}
@@ -920,34 +925,11 @@ function renderShapes(box){
      <div><p class="lbl">Be harfiyle birleşince</p><div class="join">${j.map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
      ${notes.length?`<ul class="rules">${notes.map(n=>`<li>${n}</li>`).join("")}</ul>`:""}
    </div>
-   <button class="btn pri" id="shapeTest">Şekil testi: "Bu şekil hangi harf?"</button>
-   <div class="quiz" id="sq" hidden></div>`;
+   <button class="btn pri" id="shapeEz">${x[1]} ve benzerlerinin yazılışını çalış ›<br><small style="font-weight:400" class="ar">${yzSet(c).join(" ")}</small></button>
+   <button class="btn" id="shapeAll">Yazılış ezberine git (harfleri kendin seç)</button>`;
   box.querySelectorAll(".lchips button").forEach(b=>b.onclick=()=>{shapeSel=b.dataset.c;renderShapes(box)});
-  box.querySelector("#shapeTest").onclick=()=>startShapeTest(box);
-}
-function startShapeTest(box){
-  const el=box.querySelector("#sq");el.hidden=false;box.querySelector("#shapeTest").hidden=true;
-  const pool=ALLC.filter(c=>c!=="لا");const qs=[];
-  const letters=shuffle(pool.slice()).slice(0,10);
-  letters.forEach(c=>{
-    const joins=!byChar[c][5];
-    const pos=joins?["başta","ortada","sonda"][Math.random()*3|0]:["ortada","sonda"][Math.random()*2|0];
-    let near=groupOf(c).filter(o=>o!=="لا");
-    if(pos!=="sonda"&&TEETH.includes(c)) near=near.concat(TEETH.split(""));
-    if(pos!=="sonda"&&"فق".includes(c)) near=near.concat(["ف","ق"]);
-    if(c==="ل") near=near.concat(["ا","ك"]);
-    if(c==="ا") near=near.concat(["ل"]);
-    const f=posForm(c,pos);
-    qs.push({ask:"Bu şekil hangi harf?",show:f,sub:`kelimenin ${pos==="başta"?"başında":pos==="ortada"?"ortasında":"sonunda"}`,ans:c,key:f,
-      opts:optList(c,near,pool,4).map(o=>[o,byChar[o][1]]),fbOk:`${f} = ${byChar[c][1]} (${c}), ${pos} yazılışı`});
-  });
-  el.scrollIntoView({block:"start"});
-  miniQuiz(el,qs,{retry:false,onDone:(s,t,m)=>{
-    el.innerHTML=`<div class="stars">${s>=9?"★★★":s>=6?"★★☆":"★☆☆"}</div><div class="score">${s} / ${t}</div>
-     ${m.length?`<p style="margin:0;color:var(--muted)">Karıştırdığın şekiller:</p><div class="ar" style="font-size:2.4rem;line-height:1.8">${m.join("   ")}</div>`:"<p style=\"margin:0\">Hepsi doğru, harika!</p>"}
-     <button class="btn pri" id="sAgain" style="width:100%">Yeni şekil testi</button>`;
-    el.querySelector("#sAgain").onclick=()=>startShapeTest(box);
-  }});
+  box.querySelector("#shapeEz").onclick=()=>goYazEz(yzSet(c));
+  box.querySelector("#shapeAll").onclick=()=>goYazEz(null);
 }
 
 // ===== EZBER =====
@@ -974,6 +956,7 @@ function ezNewSession(letters){
 }
 function renderEzber(box){
   if(ezKind==="kural")return renderKural(box);
+  if(ezKind==="yazilis")return renderYazilis(box);
   if(ezView===null) ezView=(ez&&!ez.finished)?"run":"pick";
   if(ezView==="run"&&ez) return ez.finished?ezFinish(box):ezRun(box);
   ezPick(box);
@@ -1033,7 +1016,7 @@ function ezKbCheck(){
 }
 window.addEventListener("resize",ezKbCheck);
 if(window.visualViewport){visualViewport.addEventListener("resize",ezKbCheck);visualViewport.addEventListener("scroll",()=>{if(document.body.classList.contains("typing")&&window.scrollY)window.scrollTo(0,0)})}
-function ezLeave(){clearTimeout(ezTimer);if(typeof kzTimer!=="undefined")clearTimeout(kzTimer);document.body.classList.remove("typing");document.body.style.height=""}
+function ezLeave(){clearTimeout(ezTimer);if(typeof kzTimer!=="undefined")clearTimeout(kzTimer);if(typeof yzTimer!=="undefined")clearTimeout(yzTimer);document.body.classList.remove("typing");document.body.style.height=""}
 function ezBuildShell(box){
   box.innerHTML=`<div class="ltop"><button class="btn sm" id="ezBack">‹ Seçim</button><span style="flex:1" id="ezCount"></span><span id="ezScore" style="font-variant-numeric:tabular-nums"></span></div>
    <div class="bar ezbar" style="height:8px;margin:0"><i id="ezBar"></i></div>
@@ -1656,8 +1639,8 @@ window.addEventListener("offline",()=>{if(learnView==="sure"){stopAudio();render
 
 // ===== KURAL EZBERİ (hareke ve işaretler: ne gelirse ne okutur) =====
 let ezKind="harf";
-try{ezKind=localStorage.getItem("elifba-ezkind")==="kural"?"kural":"harf"}catch(e){}
-const kindSeg=()=>`<div class="seg kindseg"><button data-kind="harf" class="${ezKind==="harf"?"sel":""}">Harf ezberi</button><button data-kind="kural" class="${ezKind==="kural"?"sel":""}">Kural ezberi</button></div>`;
+try{const v=localStorage.getItem("elifba-ezkind");ezKind=v==="kural"||v==="yazilis"?v:"harf"}catch(e){}
+const kindSeg=()=>`<div class="seg kindseg"><button data-kind="harf" class="${ezKind==="harf"?"sel":""}">Harf ezberi</button><button data-kind="kural" class="${ezKind==="kural"?"sel":""}">Kural ezberi</button><button data-kind="yazilis" class="${ezKind==="yazilis"?"sel":""}">Yazılış ezberi</button></div>`;
 function bindKind(box){box.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{ezLeave();ezKind=b.dataset.kind;try{localStorage.setItem("elifba-ezkind",ezKind)}catch(e){}renderEzber(box)})}
 
 const KR=[
@@ -1881,6 +1864,186 @@ function kzFinish(box){
   box.querySelector("#kzSame").onclick=()=>kzNew(k.rules);
   box.querySelector("#kzNewSel").onclick=()=>{kzView="pick";renderKural(box)};
 }
+// ===== YAZILIŞ EZBERİ (harfin başta / ortada / sonda yazılışı) =====
+const YPOS=["başta","ortada","sonda"];
+const YPOSL={"başta":"kelimenin başında","ortada":"kelimenin ortasında","sonda":"kelimenin sonunda"};
+const YTYPES=[["sekil","Şekli gör, harfi bul"],["harf","Adını gör, şeklini bul"],["mix","Karışık"]];
+let ySel=new Set(),yTarget=3,yType="mix",yz=null,yzView=null,yzTimer=null,yzCur=null;
+try{const s=JSON.parse(localStorage.getItem("elifba-yazez")||"null");if(s){ySel=new Set(s.sel||[]);yTarget=s.target||3;yType=s.type||"mix";yz=s.session||null}}catch(e){}
+const saveYz=()=>{try{localStorage.setItem("elifba-yazez",JSON.stringify({sel:[...ySel],target:yTarget,type:yType,session:yz}))}catch(e){}};
+const yzMastered=k=>k.letters.filter(c=>(k.st[c]||0)>=k.target).length;
+// Bu konumda bu harfe benzeyen harfler (Yazılış testindeki benzerlik kuralı)
+function yNear(c,pos){
+  let near=groupOf(c).filter(o=>o!=="لا"&&o!==c);
+  if(pos!=="sonda"&&TEETH.includes(c))near=near.concat(TEETH.split(""));
+  if(pos!=="sonda"&&"فق".includes(c))near=near.concat(["ف","ق"]);
+  if(c==="ل")near=near.concat(["ا","ك"]);
+  if(c==="ا")near=near.concat(["ل"]);
+  return [...new Set(near)].filter(o=>o!==c);
+}
+// Yazılış sekmesinden: seçilen harf ve benzerleriyle Yazılış ezberini başlat (ya da seçim ekranına git)
+const yzSet=c=>{ // en çok karışanlar önce: diş harfleri, Fe/Kaf, sonra aile
+  const n=yNear(c,"başta"),pri=TEETH.includes(c)?TEETH.split(""):"فق".includes(c)?["ف","ق"]:[];
+  return [c,...pri.filter(o=>o!==c),...n.filter(o=>!pri.includes(o))].filter((o,i,a)=>a.indexOf(o)===i).slice(0,6)};
+function goYazEz(letters){
+  ezLeave();learnView="ezber";ezKind="yazilis";try{localStorage.setItem("elifba-ezkind","yazilis")}catch(e){}
+  document.querySelectorAll("[data-lv]").forEach(b=>b.classList.toggle("sel",b.dataset.lv==="ezber"));
+  if(letters){ySel=new Set(letters);yzNew(letters)}else{yzView="pick";renderLearn()}
+}
+function renderYazilis(box){
+  if(yzView===null)yzView=(yz&&!yz.finished)?"run":"pick";
+  if(yzView==="run"&&yz)return yz.finished?yzFinish(box):yzRun(box);
+  yzPick(box);
+}
+function yzPick(box){
+  document.getElementById("learnSeg").hidden=false;
+  const n=ySel.size,known=order.filter(c=>done.has(c));
+  const demo={sekil:`<span class="dq ar">ـبـ</span><span class="da">"Bu şekil hangi harf?" → <b>Be</b> (kelimenin ortasında)</span>`,
+    harf:`<span class="dq">Be · ortada</span><span class="da">4 şekil arasından <span class="ar">ـبـ</span> şeklini seçersin</span>`,
+    mix:`<span class="da">Bazen şekli görüp harfi, bazen harfi görüp şeklini bulursun</span>`}[yType];
+  box.innerHTML=kindSeg()+`<div class="intro">Harfler kelimede <b>başta</b>, <b>ortada</b> ve <b>sonda</b> farklı yazılır. Çalışmak istediğin harfleri <b>seç</b>; her harf farklı konumlarda sorulur ve <b>arka arkaya ${yTarget} kez</b> doğru bilinene kadar sürer.</div>
+   ${yz&&!yz.finished?`<div class="note" style="display:flex;align-items:center;gap:10px"><span style="flex:1">Yarım kalan yazılış ezberi: <b>${yzMastered(yz)} / ${yz.letters.length}</b> harf ezberlendi.</span><button class="btn sm pri" id="yzResume">Devam et</button></div>`:""}
+   <div class="quick">
+     <button class="btn sm" id="yzKnown" ${known.length?"":"disabled"}>Öğrendiklerim (${known.length})</button>
+     <button class="btn sm" id="yzAll">Tümü</button>
+     <button class="btn sm" id="yzNone">Temizle</button>
+   </div>
+   <div class="pick">${order.map(c=>`<button data-c="${c}" class="${ySel.has(c)?"sel":""}"><span class="ar">${c}</span><small>${byChar[c][1]}</small></button>`).join("")}</div>
+   <div><p class="lbl">Kaç kez arka arkaya doğru bilinsin?</p><div class="seg s3">${[2,3,5].map(t=>`<button data-ytg="${t}" class="${t===yTarget?"sel":""}">${t} kez</button>`).join("")}</div></div>
+   <div class="subopt"><p class="lbl">Soru türü</p>
+     <div class="seg s3 tall">${YTYPES.map(([k,t])=>`<button data-yt="${k}" class="${k===yType?"sel":""}">${t}</button>`).join("")}</div>
+     <div class="demo">${demo}</div>
+     <button class="tog ${optHide?"on":""}" id="yzHideP" type="button"><i></i>Şıkları gizle: önce aklından tahmin et, sonra dokunup aç</button></div>
+   <button class="btn pri" id="yzStart" ${n<2?"disabled":""}>${n<2?"En az 2 harf seç":`Başla · ${n} harf`}</button>`;
+  bindKind(box);
+  const re=()=>{saveYz();yzPick(box)};
+  box.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{const c=b.dataset.c;ySel.has(c)?ySel.delete(c):ySel.add(c);re()});
+  box.querySelector("#yzKnown").onclick=()=>{ySel=new Set(known);re()};
+  box.querySelector("#yzAll").onclick=()=>{ySel=new Set(order);re()};
+  box.querySelector("#yzNone").onclick=()=>{ySel=new Set();re()};
+  box.querySelectorAll("[data-ytg]").forEach(b=>b.onclick=()=>{yTarget=+b.dataset.ytg;re()});
+  box.querySelectorAll("[data-yt]").forEach(b=>b.onclick=()=>{yType=b.dataset.yt;re()});
+  box.querySelector("#yzHideP").onclick=()=>{optHide=!optHide;saveHide();re()};
+  const r=box.querySelector("#yzResume");if(r)r.onclick=()=>{yzView="run";renderYazilis(box);document.querySelector("main").scrollTop=0};
+  box.querySelector("#yzStart").onclick=()=>yzNew([...ySel]);
+}
+function yzNew(letters){
+  yz={letters:order.filter(c=>letters.includes(c)),st:{},ms:{},asked:0,right:0,last:null,target:yTarget,type:yType,finished:false};
+  yzView="run";saveYz();const box=document.getElementById("learnBody");box.innerHTML="";yzRun(box);document.querySelector("main").scrollTop=0;
+}
+function yzStrip(k){return `<div class="ezstrip">${k.letters.map(c=>{const s=Math.min(k.st[c]||0,k.target);
+  return `<div class="ezc ${s>=k.target?"m":""}"><span class="ar">${c}</span><span class="pips">${Array.from({length:k.target},(_,i)=>`<i class="${i<s?"f":""}"></i>`).join("")}</span></div>`}).join("")}</div>`}
+function yzShell(box){
+  box.innerHTML=`<div class="ltop"><button class="btn sm" id="yzBack">‹ Seçim</button><span style="flex:1" id="yzCount"></span><span id="yzScore" style="font-variant-numeric:tabular-nums"></span></div>
+   <div class="bar ezbar" style="height:8px;margin:0"><i id="yzBar"></i></div>
+   <div class="ezstrip"></div>
+   <div class="kzbar"><button class="tog" id="yzHide" type="button" hidden><i></i>Şıkları gizle, önce tahmin et</button></div>
+   <div class="quiz ezq" id="yzCard">
+     <div class="qhead"><p class="qask" id="yzAsk"></p></div>
+     <div id="yzShow"></div>
+     ${revealBtn("yzReveal")}
+     <div class="opts" id="yzOpts"></div>
+     <button class="btn sm cover" id="yzCover" type="button" hidden>Şıkları kapat</button>
+     <div class="fb" aria-live="polite"></div>
+     <button class="btn pri" id="yzNext" type="button" hidden style="width:100%">Devam et ›</button>
+   </div>`;
+  const nextNow=()=>{clearTimeout(yzTimer);if(learnView==="ezber"&&ezKind==="yazilis"&&yzView==="run")yzRun(box)};
+  box.querySelector("#yzBack").onclick=()=>{ezLeave();yzView="pick";renderYazilis(box)};
+  box.querySelector("#yzNext").onclick=nextNow;
+  const yzV=()=>veil(box,yzCur,"yz");
+  box.querySelector("#yzHide").onclick=()=>{optHide=!optHide;saveHide();if(yzCur)yzCur.shown=false;yzV()};
+  box.querySelector("#yzReveal").onclick=()=>{if(yzCur)yzCur.shown=true;yzV();buzz(10)};
+  box.querySelector("#yzCover").onclick=()=>{if(yzCur)yzCur.shown=false;yzV()};
+  box.querySelector("#yzOpts").onclick=ev=>{const b=ev.target.closest("button");if(b&&!b.disabled)yzJudge(box,b.dataset.v,b)};
+}
+function yzHead(box,k){
+  const m=yzMastered(k),n=k.letters.length;
+  box.querySelector("#yzCount").innerHTML=`Ezberlenen <b>${m} / ${n}</b>`;
+  box.querySelector("#yzScore").textContent=`${k.right} / ${k.asked} doğru`;
+  box.querySelector("#yzBar").style.width=(m/n*100)+"%";
+  box.querySelector(".ezstrip").outerHTML=yzStrip(k);
+}
+function yzRun(box){
+  clearTimeout(yzTimer);document.getElementById("learnSeg").hidden=true;
+  const k=yz,left=k.letters.filter(c=>(k.st[c]||0)<k.target);
+  if(!left.length){ezLeave();k.finished=true;saveYz();return yzFinish(box)}
+  const cand=left.length>1?left.filter(c=>c!==k.last):left;
+  const w=cand.map(c=>1+(k.target-(k.st[c]||0))+(k.ms[c]||0)*0.7);
+  let x=Math.random()*w.reduce((a,b)=>a+b,0),c=cand[cand.length-1];
+  for(let i=0;i<cand.length;i++){x-=w[i];if(x<=0){c=cand[i];break}}
+  k.last=c;saveYz();
+  if(!box.querySelector("#yzCard"))yzShell(box);
+  const type=k.type==="mix"?(Math.random()<.5?"sekil":"harf"):k.type;
+  const pos=YPOS[Math.random()*3|0],f=posForm(c,pos);
+  const near=shuffle(yNear(c,pos)),pool=shuffle(k.letters.concat(ALLC).filter((o,i,a)=>a.indexOf(o)===i&&o!==c));
+  let ask,show,ans,opts;
+  if(type==="sekil"){ // şekli gör → harfi seç (her harfin bu konumdaki şekli farklıdır)
+    ask="Bu şekil hangi harf?";ans=c;
+    show=`<div class="qglyph ar">${f}</div><p class="qpos">${YPOSL[pos]}</p>`;
+    opts=[c];for(const o of near.concat(pool))if(opts.length<4&&!opts.includes(o))opts.push(o);
+  }else{ // harfi gör → bu konumdaki şeklini seç; aynı görünen şekiller (ör. bitişmeyen harfte başta = tek) şık olmaz
+    ask=`${byChar[c][1]} ${YPOSL[pos]} nasıl yazılır?`;ans=f;
+    show=`<div class="qname">${byChar[c][1]}</div><p class="qpos">${YPOSL[pos]}</p>`; // harfin kendisi gösterilmez: bitişmeyenlerde başta = tek, cevabı ele verir
+    const own=shuffle(form4(c).map(x=>x[0])).filter(s=>s!==f);
+    const oth=near.concat(pool).map(o=>posForm(o,pos));
+    opts=[f];
+    for(const s of own.slice(0,2))if(!opts.includes(s))opts.push(s);
+    for(const s of oth)if(opts.length<4&&!opts.includes(s))opts.push(s);
+  }
+  yzCur={c,pos,f,type,ans,mode:"opts",answered:false,k};
+  yzHead(box,k);
+  box.querySelector("#yzAsk").textContent=ask;
+  box.querySelector("#yzShow").innerHTML=show;
+  const O=box.querySelector("#yzOpts");O.className="opts"+(type==="harf"?" glyphs":"");
+  O.innerHTML=shuffle(opts).map(v=>`<button data-v="${esc(v)}">${type==="sekil"?byChar[v][1]:v}</button>`).join("");
+  box.querySelector("#yzNext").hidden=true;
+  box.querySelector(".fb").innerHTML="";
+  veil(box,yzCur,"yz");
+}
+function yzJudge(box,v,btn){
+  const Z=yzCur;if(!Z||Z.answered)return;Z.answered=true;veil(box,Z,"yz");
+  const k=Z.k,c=Z.c,ok=v===Z.ans;
+  box.querySelectorAll("#yzOpts button").forEach(x=>{x.disabled=true;if(x.dataset.v===Z.ans)x.classList.add("ok","pop")});
+  if(btn&&!ok)btn.classList.add("no");
+  k.asked++;
+  const fb=box.querySelector(".fb"),nm=byChar[c][1];
+  if(ok){k.right++;k.st[c]=(k.st[c]||0)+1;buzz(25);const s=k.st[c];fb.style.color="var(--good)";
+    fb.innerHTML=s>=k.target?`✓ Doğru! ${nm} ezberlendi.<small><span class="ar" style="font-size:1.5rem">${Z.f}</span> = ${nm}, ${Z.pos}</small>`
+      :`✓ Doğru!<small><span class="ar" style="font-size:1.5rem">${Z.f}</span> = ${nm}, ${Z.pos} · ${s} / ${k.target}</small>`;
+    saveYz();yzHead(box,k);
+    yzTimer=setTimeout(()=>{if(learnView==="ezber"&&ezKind==="yazilis"&&yzView==="run"&&yz===k)yzRun(box)},1000);return}
+  k.st[c]=0;k.ms[c]=(k.ms[c]||0)+1;buzz([60,60,60]);fb.style.color="var(--bad)";
+  // karşılaştırma: doğru harf ile seçilen harf aynı konumda yan yana
+  let cmp="";
+  if(Z.type==="sekil"&&byChar[v])cmp=`<div class="fam">${[c,v].map(o=>`<div class="${o===c?"me":""}"><span class="ar">${posForm(o,Z.pos)}</span><b>${byChar[o][1]}</b><small>${o===c?"doğrusu":"seçtiğin"}</small></div>`).join("")}</div>`;
+  const four=`<div class="forms4">${form4(c).map(x=>`<div class="${x[0]===Z.f&&x[1]===Z.pos?"me":""}"><span class="ar">${x[0]}</span><small>${x[1]}</small></div>`).join("")}</div>`;
+  const notes=shapeNotes(c);
+  fb.innerHTML=`✗ Yanlış. Doğrusu: ${Z.type==="sekil"?nm:`<span class="ar" style="font-size:1.6rem">${Z.f}</span>`}
+    <small>${nm} harfi ${YPOSL[Z.pos]} böyle yazılır.</small>${cmp}
+    <small style="margin-top:6px">${nm} harfinin 4 yazılışı (sağdan sola):</small>${four}
+    ${notes.length?`<small style="text-align:left">${notes.join("<br>")}</small>`:""}
+    <small>Sayaç sıfırlandı, bu harf yine gelecek.</small>`;
+  saveYz();yzHead(box,k);
+  const nb=box.querySelector("#yzNext");nb.hidden=false;try{nb.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}
+}
+function yzFinish(box){
+  document.getElementById("learnSeg").hidden=true;
+  const k=yz,acc=k.asked?Math.round(k.right/k.asked*100):0;
+  const hard=k.letters.filter(c=>k.ms[c]).sort((a,b)=>k.ms[b]-k.ms[a]);
+  box.innerHTML=`<div class="quiz">
+    <div class="stars">${acc>=90?"★★★":acc>=70?"★★☆":"★☆☆"}</div>
+    <h2 style="margin:0">Maşallah, yazılışları ezberledin!</h2>
+    <p style="margin:0">${k.letters.length} harf · ${k.asked} soru · %${acc} doğru</p>
+    <div class="ar" style="font-size:2.2rem;line-height:1.8;color:var(--accent)">${k.letters.join(" ")}</div>
+    ${hard.length?`<p class="lbl" style="margin:0">En çok zorlandıkların</p><div class="ezstrip wrap" style="justify-content:center">${hard.slice(0,10).map(c=>`<div class="ezc"><span class="ar">${c}</span><small style="font-size:.7rem;color:var(--muted)">${k.ms[c]} hata</small></div>`).join("")}</div>`:`<p style="margin:0">Hiç hata yapmadın!</p>`}
+    ${hard.length>=2?`<button class="btn pri" id="yzHard" style="width:100%">Zorlandıklarımla tekrar (${hard.length} harf)</button>`:""}
+    <button class="btn ${hard.length>=2?"":"pri"}" id="yzSame" style="width:100%">Aynı harflerle tekrar</button>
+    <button class="btn" id="yzNewSel" style="width:100%">Yeni seçim yap</button></div>`;
+  const h=box.querySelector("#yzHard");if(h)h.onclick=()=>{ySel=new Set(hard);yzNew(hard)};
+  box.querySelector("#yzSame").onclick=()=>yzNew(k.letters);
+  box.querySelector("#yzNewSel").onclick=()=>{yzView="pick";renderYazilis(box)};
+}
+
 
 renderGroups();renderHk();renderRules();prog();renderLearn();
 </script>
