@@ -1,0 +1,1 @@
+SV(108,[["إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ","İnnâ a’taynâkel kevser","Muhakkak biz sana Kevser'i verdik"],["فَصَلِّ لِرَبِّكَ وَانْحَرْ","Fe salli li rabbike venhar","Öyleyse Rabb'in için namaz kıl ve kurban kes"],["إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ","İnne şânieke huvel ebter","Muhakkak ki sonu kesik olan, sana buğzedendir"]]);
