@@ -336,6 +336,15 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 .kpick button.sel::after{content:"✓";position:absolute;top:2px;left:5px;font-size:.72rem;color:var(--accent);font-weight:700}
 .seg.ktype{grid-template-columns:1fr 1fr}
 .opts.kwide button{font-size:1rem;line-height:1.3}
+.opts.ayk{grid-template-columns:1fr}.opts.ayk button{font-size:1rem;line-height:1.35;text-align:left;padding:10px 14px;min-height:0}
+.aslist{display:flex;flex-direction:column;gap:8px}
+.asrow{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;text-align:left;cursor:pointer}
+.asrow.done{border-color:var(--good)}.asrow.lock{opacity:.55;cursor:default}
+.asno{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem}
+.asrow.done .asno{background:var(--good);color:var(--bg)}
+.ast{display:flex;flex-direction:column;gap:1px;min-width:0}.ast small{color:var(--muted);font-size:.8rem}.ast .asex .ar{font-size:1.1rem}
+.asb{font-size:.82rem;color:var(--accent);font-weight:600;white-space:nowrap}
+.asmiss{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;font-size:.9rem}.asmiss div{border:1px solid var(--line);border-radius:10px;padding:4px 10px}.asmiss .ar{font-size:1.3rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pop{animation:pop .25s ease}
@@ -379,6 +388,9 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
   </section>
 
   <section id="test" hidden>
+    <div class="seg" id="tKindSeg"><button data-tk="asama" class="sel">Aşamalı test</button><button data-tk="serbest">Serbest test</button></div>
+    <div id="tAsama" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div id="tSerbest" hidden style="display:flex;flex-direction:column;gap:12px">
     <div class="seg" id="modeSeg">
       <button data-mode="harf" class="sel">Bu harf nedir?</button>
       <button data-mode="ters">Hangisi?</button>
@@ -390,6 +402,7 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
       <button data-set="done">Öğrendiklerim</button>
     </div>
     <div class="quiz" id="quiz"></div>
+    </div>
   </section>
 </main>
 
@@ -554,7 +567,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(o=>o.setAttribute("aria-selected",o===b));
   document.querySelectorAll("main section").forEach(s=>s.hidden=s.id!==b.dataset.t);
   document.querySelector("main").scrollTop=0;
-  if(b.dataset.t==="test"&&(!q||q.n===0))newRound();
+  if(b.dataset.t==="test")renderTestKind();
 });
 
 // ===== HARFLER =====
@@ -1255,8 +1268,10 @@ function mutations(R,kind){
   return [...new Set(out)].filter(x=>x!==j);
 }
 function readingOptions(w,kind){
-  const R=syllables(w).map(s=>s.r),ans=R.join("-");
-  const m=mutations(R,kind);
+  const SY=syllables(w),R=SY.map(s=>s.r),ans=R.join("-");
+  const bogazVar=x=>{const P=x.split("-");if(P.length!==R.length)return false;let d=false;
+    for(let i=0;i<R.length;i++)if(P[i]!==R[i]){if(!(BOGAZ.includes([...SY[i].a][0])&&vfold(P[i])===vfold(R[i])))return false;d=true}return d};
+  const m=mutations(R,kind).filter(x=>!bogazVar(x));
   // derse özgü hatayı öne al
   const opts=[ans];
   const dbl=x=>/([bcdfğhjklmnprsştvyz])-\1/.test(x);
@@ -2109,12 +2124,148 @@ function yzFinish(box){
 }
 
 
+// ===== AŞAMALI TEST (harften ayete, git gide zorlaşır) =====
+// Her aşama 10 soru. Sonraki aşama ancak 10'da 10 ile açılır. 4 ya da daha çok yanlışta bir aşama aşağı inmek tavsiye edilir.
+// İçerik: harf/okunuş kuralları (denetlenmiş read/KR), derslerdeki doğrulanmış kelimeler, ayet okunuşları kaynaktan (üretilmez).
+const AS_N=10,AS_PASS=10,AS_DOWN=6; // 6 ve altı doğru (4+ yanlış) → bir aşama aşağı tavsiyesi
+const KR_H={u:"a",tf:"a",ma:"a",e:"i",tk:"i",my:"i",o:"u",td:"u",mv:"u",c:"c",s:"c"};
+const pickDistinct=(arr,n)=>shuffle(arr.slice()).slice(0,n);
+const fillOpts=(ans,cands,pool,n,ok=(x=>true))=>{const o=[ans];for(const x of cands.concat(shuffle(pool.slice())))if(o.length<n&&x&&!o.includes(x)&&ok(x))o.push(x);return o};
+function krQ(R,c){ // kural + harf → "nasıl okunur?"
+  const g=R.g(c),rd=R.r(c);
+  const cands=[swapFirstV(rd),...famOrder(R).filter(o=>o.all||c!=="ا").map(o=>o.r(c))];
+  const opts=fillOpts(rd,cands,[],4,x=>okD(c,x,rd,R.id));
+  const hn=harfNot(c,KR_H[R.id]);
+  return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans:rd,opts:shuffle(opts).map(o=>[o,o]),key:g,
+    fbOk:`<span class="ar" style="font-size:1.4rem">${g}</span> = <b>${rd}</b> · ${R.ad}${hn?" · "+hn.replace(/<[^>]+>/g,""):""}`,miss:`<span class="ar">${g}</span> ${rd}`};
+}
+const KISA_S=[1,...Array.from({length:37},(_,i)=>78+i)];
+const AS=[
+ {ad:"Harfi tanı",d:"Harfi gör, adını seç",ex:"ب → Be",
+  gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const o=fillOpts(c,nearLetters(c).slice(0,2),ALLC,4);
+    return {ask:"Bu harf nedir?",html:`<div class="qglyph ar">${c}</div>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:c,fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,miss:`<span class="ar">${c}</span> ${byChar[c][1]}`}})},
+ {ad:"Harfi bul",d:"Adını gör, benzer harfler arasından bul",ex:"Sad → ص",
+  gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const near=[...groupOf(c),...(TEETH.includes(c)?TEETH.split(""):[]),...("فق".includes(c)?["ف","ق"]:[]),...(c==="ل"?["ا","ك"]:[]),...(c==="ا"?["ل"]:[])].filter(o=>o!==c);
+    const o=fillOpts(c,shuffle([...new Set(near)]),ALLC,4);
+    return {ask:"Hangisi bu harf?",html:`<div class="qname">${byChar[c][1]}</div>`,ans:c,glyphs:1,opts:shuffle(o).map(x=>[x,x]),key:c,fbOk:`${byChar[c][1]} = <span class="ar" style="font-size:1.4rem">${c}</span> · ${FARK[c]}`,miss:`${byChar[c][1]} <span class="ar">${c}</span>`}})},
+ {ad:"Kelimedeki şekiller",d:"Başta, ortada, sonda yazılışı tanı",ex:"ـبـ → Be",
+  gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const pos=YPOS[Math.random()*3|0],f=posForm(c,pos);const o=fillOpts(c,shuffle(yNear(c,pos)),ALLC,4);
+    return {ask:"Bu şekil hangi harf?",html:`<div class="qglyph ar">${f}</div><p class="qpos">${YPOSL[pos]}</p>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:f,fbOk:`<span class="ar" style="font-size:1.4rem">${f}</span> = ${byChar[c][1]}, ${pos} yazılışı`,miss:`<span class="ar">${f}</span> ${byChar[c][1]}`}})},
+ {ad:"Üstün, esre, ötre",d:"Harekeli harfi oku",ex:"صِ → sı",
+  gen:()=>pickDistinct(LET,AS_N).map(c=>{const h="aiu"[Math.random()*3|0],g=glyph(c,h),ans=read(c,h);
+    const cands=[...shuffle("aiu".split("").filter(x=>x!==h)).map(x=>read(c,x)),ans.replace(/[eaiıüu]$/,m=>SWAP[m]),...nearLetters(c).map(o=>read(o,h))];
+    const o=fillOpts(ans,cands,[],4,x=>okD(c,x,ans));const hn=harfNot(c,h);
+    return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans,opts:shuffle(o).map(x=>[x,x]),key:g,fbOk:`<span class="ar" style="font-size:1.4rem">${g}</span> = <b>${ans}</b> (${byChar[c][1]} ${HN[h]})${hn?" · "+hn.replace(/<[^>]+>/g,""):""}`,miss:`<span class="ar">${g}</span> ${ans}`}})},
+ {ad:"Cezm ve şedde",d:"Harekesiz ve iki kez okunan harfler",ex:"أَقْ → ak",
+  gen:()=>pickDistinct(LETN,AS_N).map((c,i)=>krQ(KRby[i%2?"s":"c"],c))},
+ {ad:"Tenvin ve uzatma",d:"Sona n ekleyen ve sesi uzatan işaretler",ex:"بًا → ben",
+  gen:()=>{const ids=["tf","tk","td","ma","my","mv"];return pickDistinct(LETN,AS_N).map((c,i)=>krQ(KRby[ids[i%6]],c))}},
+ {ad:"Karışık heceler",d:"Bütün işaretler bir arada",ex:"قُو → kû",
+  gen:()=>{const out=[],seen=new Set();while(out.length<AS_N){const R=KR[Math.random()*KR.length|0],c=letterFor(R),q=krQ(R,c);if(!seen.has(q.key)){seen.add(q.key);out.push(q)}}return out}},
+ {ad:"Kelimeler",d:"Derslerdeki kelimeleri hece hece oku",ex:"كَتَبَ → ke-te-be",
+  gen:()=>{const W=[];RL.forEach(l=>(l.words||[]).forEach(([w,m])=>W.push([w,m,l.kind])));
+    return pickDistinct(W,AS_N).map(([w,m,kind])=>{const ans=readWord(w);
+      return {ask:"Bu kelime nasıl okunur?",html:`<div class="qglyph ar" style="font-size:4.4rem">${w}</div>`,ans,opts:readingOptions(w,kind).map(x=>[x,x]),key:w,optClass:"kwide",fbOk:`<span class="ar" style="font-size:1.4rem">${w}</span> = <b>${ans}</b> · ${m}`,miss:`<span class="ar">${w}</span> ${ans}`}})}},
+ {ad:"Kısa ayetler",d:"Fâtiha ve Amme cüzünden ayetin okunuşunu bul",ex:"قُلْ هُوَ اللَّهُ أَحَدٌ → Kul huvallâhu ehad",need:KISA_S,
+  gen:()=>{const A=[];
+    for(const n of KISA_S){const s=sureBy(n);if(!s.v)continue;s.v.forEach((a,i)=>{const w=a[0].split(/\s+/).filter(isW).length;if(w<=8)A.push({s,i,a})})}
+    const norm=t=>t.toLocaleLowerCase("tr").replace(/[^a-zçğıöşüâîû]/g,"");
+    return pickDistinct(A,AS_N).map(({s,i,a})=>{const ans=a[1],L=ans.length;
+      const same=s.v.map((b,j)=>[b[1],j]).filter(([t,j])=>j!==i).sort((x,y)=>Math.abs(x[0].length-L)-Math.abs(y[0].length-L)).map(x=>x[0]);
+      const other=A.filter(x=>x.s!==s).map(x=>x.a[1]);
+      const o=fillOpts(ans,same.slice(0,6),other,4,x=>norm(x)!==norm(ans));
+      return {ask:"Bu ayet nasıl okunur?",html:`<div class="qay ar">${a[0]}</div><p class="qpos">${s.ad} Suresi, ${i+1}. ayet</p>`,ans,opts:shuffle(o).map(x=>[x,x]),key:s.n+":"+(i+1),optClass:"ayk",
+        fbOk:`${s.ad} ${i+1}: <b>${esc(ans)}</b><br>Meali: ${esc(a[2])}`,miss:`${s.ad} ${i+1}. ayet`}})}},
+];
+let asP={open:1,best:{},pass:{}},asView="list",asRun=null;
+try{const s=JSON.parse(localStorage.getItem("elifba-asama")||"null");if(s)asP={open:s.open||1,best:s.best||{},pass:s.pass||{}}}catch(e){}
+const saveAs=()=>{try{localStorage.setItem("elifba-asama",JSON.stringify(asP))}catch(e){}};
+let tKind="asama";try{tKind=localStorage.getItem("elifba-testkind")==="serbest"?"serbest":"asama"}catch(e){}
+function renderTestKind(){
+  document.querySelectorAll("[data-tk]").forEach(b=>b.classList.toggle("sel",b.dataset.tk===tKind));
+  document.getElementById("tAsama").hidden=tKind!=="asama";document.getElementById("tSerbest").hidden=tKind!=="serbest";
+  if(tKind==="asama")renderAsama();else if(!q||q.n===0)newRound();
+}
+function renderAsama(){
+  const box=document.getElementById("tAsama");
+  if(asView==="run"&&asRun)return asShow(box);
+  asView="list";
+  box.innerHTML=`<div class="intro">Harften ayete <b>${AS.length} aşama</b>. Her aşama ${AS_N} soru; sonraki aşama <b>${AS_N}'da ${AS_PASS}</b> yapınca açılır. Sorular her seferinde değişir.</div>
+   <div class="aslist">${AS.map((S,i)=>{const n=i+1,open=n<=asP.open,b=asP.best[n],ps=asP.pass[n];
+     return `<button class="asrow ${open?"":"lock"} ${ps?"done":""}" data-as="${n}" ${open?"":"disabled"}><span class="asno">${ps?"✓":open?n:"🔒"}</span>
+       <span class="ast"><b>${n}. ${S.ad}</b><small>${S.d}</small><small class="asex">${S.ex.replace(/[؀-ۿ][؀-ۿ\s]*/g,m=>`<span class="ar">${m.trim()}</span> `)}</small></span>
+       <span class="asb">${b!=null?`${b}/${AS_N}`:open?"Başla ›":""}</span></button>`}).join("")}</div>`;
+  box.querySelectorAll("[data-as]").forEach(b=>b.onclick=()=>asStart(+b.dataset.as));
+}
+function asStart(n){
+  const S=AS[n-1],box=document.getElementById("tAsama");
+  const go=()=>{asRun={n,qs:S.gen(),i:0,score:0,missed:[],answered:false};asView="run";asShow(box);document.querySelector("main").scrollTop=0};
+  if(S.need&&S.need.some(x=>!sureBy(x).v)){
+    box.innerHTML=`<div class="ltop"><button class="btn sm" id="tBack">‹ Aşamalar</button><span style="flex:1">${n}. ${S.ad}</span></div><div class="note" id="asLoad">Ayetler yükleniyor…</div>`;
+    box.querySelector("#tBack").onclick=()=>{asView="list";renderAsama()};
+    Promise.all(S.need.map(x=>loadSure(x))).then(()=>{if(asView!=="run"&&document.getElementById("asLoad"))go()})
+      .catch(()=>{const l=document.getElementById("asLoad");if(l)l.innerHTML=`Ayetler yüklenemedi. İnternet bağlantını kontrol edip tekrar dene. <button class="btn sm pri" id="asRe">Tekrar dene</button>`,l.querySelector("#asRe").onclick=()=>asStart(n)});
+    return;
+  }
+  go();
+}
+function asShow(box){
+  const R=asRun,S=AS[R.n-1];
+  if(R.i>=R.qs.length)return asEnd(box);
+  const Z=R.qs[R.i];R.answered=false;
+  box.innerHTML=`<div class="ltop"><button class="btn sm" id="tBack">‹ Aşamalar</button><span style="flex:1">${R.n}. ${S.ad}</span></div>
+   <div class="quiz ezq">
+    <div class="qstat"><span>Soru ${R.i+1} / ${R.qs.length}</span><span>Doğru: ${R.score}</span></div>
+    <p class="qask">${Z.ask}</p>${Z.html}
+    <div class="opts ${Z.optClass||(Z.glyphs?"glyphs":"")}">${Z.opts.map(([v,l])=>`<button data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div>
+    <div class="fb" aria-live="polite"></div>
+    <button class="btn pri" id="asNext" hidden style="width:100%">Devam et ›</button></div>`;
+  box.querySelector("#tBack").onclick=()=>{asView="list";asRun=null;renderAsama()};
+  box.querySelector("#asNext").onclick=()=>{R.i++;asShow(box)};
+  box.querySelectorAll(".opts button").forEach(b=>b.onclick=()=>{
+    if(R.answered)return;R.answered=true;const v=b.dataset.v,ok=v===Z.ans;
+    box.querySelectorAll(".opts button").forEach(x=>{x.disabled=true;if(x.dataset.v===Z.ans)x.classList.add("ok","pop")});
+    const fb=box.querySelector(".fb");
+    if(ok){R.score++;buzz(25);fb.style.color="var(--good)";fb.innerHTML=`✓ Doğru!<small>${Z.fbOk}</small>`;
+      setTimeout(()=>{if(asRun===R&&asView==="run"&&R.answered){R.i++;asShow(box)}},Z.optClass==="ayk"?1800:1000)}
+    else{b.classList.add("no");buzz([60,60,60]);R.missed.push(Z);fb.style.color="var(--bad)";
+      fb.innerHTML=`✗ Yanlış.<small>${Z.fbOk}</small>`;
+      const nb=box.querySelector("#asNext");nb.hidden=false;try{nb.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}}
+  });
+}
+function asEnd(box){
+  const R=asRun,n=R.n,S=AS[n-1],s=R.score,t=R.qs.length,last=n===AS.length;
+  asP.best[n]=Math.max(asP.best[n]||0,s);
+  const passed=s>=AS_PASS;
+  if(passed){asP.pass[n]=(asP.pass[n]||0)+1;if(!last)asP.open=Math.max(asP.open,n+1)}
+  saveAs();
+  const down=!passed&&s<=AS_DOWN&&n>1;
+  const msg=passed?(last?`<h2 style="margin:0">Maşallah! Bütün aşamaları geçtin.</h2><p style="margin:0">Artık ayetleri okumaya hazırsın. Sureler bölümünde dinleyerek okumaya devam et.</p>`
+      :`<h2 style="margin:0">Maşallah, ${n}. aşamayı geçtin!</h2><p style="margin:0"><b>${n+1}. aşama: ${AS[n].ad}</b> açıldı.</p>`)
+    :down?`<h2 style="margin:0">Bu aşama biraz zor geldi</h2><p style="margin:0">${t-s} yanlış oldu. <b>${n-1}. aşamaya</b> inip pekiştirmeni tavsiye ederim, sonra buraya dönersin.</p>`
+    :`<h2 style="margin:0">Az kaldı!</h2><p style="margin:0">Sonraki aşamaya geçmek için <b>${t}'da ${AS_PASS}</b> gerekiyor. Tekrar dene, sorular değişecek.</p>`;
+  box.innerHTML=`<div class="ltop"><button class="btn sm" id="tBack">‹ Aşamalar</button><span style="flex:1">${n}. ${S.ad}</span></div>
+   <div class="quiz"><div class="stars">${s===t?"★★★":s>=t-2?"★★☆":"★☆☆"}</div><div class="score">${s} / ${t}</div>${msg}
+    ${R.missed.length?`<p class="lbl" style="margin:0">Yanlış yaptıkların</p><div class="asmiss">${R.missed.map(z=>`<div>${z.miss}</div>`).join("")}</div>`:""}
+    ${passed&&!last?`<button class="btn pri" id="asGo" style="width:100%">${n+1}. aşamaya geç ›</button>`:""}
+    ${down?`<button class="btn pri" id="asDown" style="width:100%">${n-1}. aşamaya in (tavsiye)</button>`:""}
+    <button class="btn ${passed||down?"":"pri"}" id="asAgain" style="width:100%">Bu aşamayı tekrar et</button>
+    <button class="btn" id="asList" style="width:100%">Aşamalar</button></div>`;
+  box.querySelector("#tBack").onclick=box.querySelector("#asList").onclick=()=>{asView="list";asRun=null;renderAsama()};
+  box.querySelector("#asAgain").onclick=()=>asStart(n);
+  const g=box.querySelector("#asGo");if(g)g.onclick=()=>asStart(n+1);
+  const d=box.querySelector("#asDown");if(d)d.onclick=()=>asStart(n-1);
+}
+document.querySelectorAll("[data-tk]").forEach(b=>b.onclick=()=>{tKind=b.dataset.tk;try{localStorage.setItem("elifba-testkind",tKind)}catch(e){}renderTestKind()});
+
 // ===== GERİ (Android geri hareketi / tarayıcının geri tuşu) =====
 // Her geri bir adım: harf penceresi → kapanır; başka sekme → Öğren; ders/test/sure içi → seçim ya da liste; Yazılış/Ezber/Sureler → Dersler.
 // Dersler ana ekranındayken geri uygulamadan çıkar.
 function backStep(dry){
   const sh=document.getElementById("sheet");
   if(sh&&!sh.hidden){if(!dry)closeSheet();return true}
+  const tb=document.querySelector('#test:not([hidden]) #tBack');
+  if(tb){if(!dry)tb.click();return true}
   const cur=document.querySelector('nav button[aria-selected="true"]');
   if(cur&&cur.dataset.t!=="ogren"){if(!dry)document.querySelector('nav button[data-t="ogren"]').click();return true}
   const lb=document.getElementById("learnBody");
@@ -2138,9 +2289,9 @@ document.addEventListener("click",()=>setTimeout(hSync,0),true);
 let hT=0;const hLater=()=>{clearTimeout(hT);hT=setTimeout(hSync,30)};
 try{const mo=new MutationObserver(hLater);mo.observe(document.getElementById("learnBody"),{childList:true});
   mo.observe(document.getElementById("sheet"),{attributes:true,attributeFilter:["hidden"]});
-  document.querySelectorAll("nav button").forEach(b=>mo.observe(b,{attributes:true,attributeFilter:["aria-selected"]}))}catch(e){}
+  document.querySelectorAll("nav button").forEach(b=>mo.observe(b,{attributes:true,attributeFilter:["aria-selected"]}));mo.observe(document.getElementById("tAsama"),{childList:true})}catch(e){}
 
-renderGroups();renderHk();renderRules();prog();renderLearn();
+renderGroups();renderHk();renderRules();prog();renderLearn();renderTestKind();
 try{history.replaceState({eb:0},"")}catch(e){}
 hSync();
 </script>
