@@ -369,6 +369,7 @@ body.typing .ezq .qglyph{font-size:3.4rem;line-height:1.45}
 
   <section id="harf" hidden>
     <div class="intro">Arapça <b>sağdan sola</b> okunur. Benzer harfler aynı satırda: çoğu sadece <b>noktalarıyla</b> ayrılır. Bir harfe dokun: adını, sesini ve <b>hareke gelince nasıl okunduğunu</b> gör.</div>
+    <p class="klg" style="text-align:left;margin:0 2px">Kırmızı harfler <b>kalın</b> okunur: <bdi class="ar">خ ص ض ط ظ غ ق</bdi>.<br>Ra (<bdi class="ar">ر</bdi>) üstün ve ötrede kalın, esrede incedir.</p>
     <div id="groups" style="display:flex;flex-direction:column;gap:18px"></div>
   </section>
 
@@ -578,7 +579,7 @@ function renderGroups(){
     g.innerHTML=`<h3>${t}<span>${s}</span></h3><div class="row"></div>`;
     const r=g.querySelector(".row");
     cs.forEach(c=>{const x=byChar[c];const b=document.createElement("button");b.className="card"+(done.has(c)?" done":"");
-      b.innerHTML=`<span class="ar">${c}</span><span class="nm">${x[1]}</span>`;b.onclick=()=>openLetter(c);r.appendChild(b)});
+      b.innerHTML=`<span class="ar ${KALIN.includes(c)?"kln":""}">${c}</span><span class="nm">${x[1]}</span>`;b.onclick=()=>openLetter(c);r.appendChild(b)});
     box.appendChild(g);
   });
 }
@@ -588,9 +589,16 @@ function forms(c){
   if(x[5]) return [[c,"tek"],[TAT+c,"sonda"],[TAT+c,"ortada"],[c,"başta"]];
   return [[c,"tek"],[TAT+c,"sonda"],[TAT+c+TAT,"ortada"],[c+TAT,"başta"]];
 }
-function htable(rows){
+// Harfler ekranında kalın harfler kırmızı: 7 kalın harf her satırda; Ra yalnız kalın okunduğu satırlarda (esre, tenvin esre, ye ile uzatmada değil)
+const CASE_KR={"Üstün":"u","Esre":"e","Ötre":"o","Cezm":"c","Şedde":"s","Tenvin üstün":"tf","Tenvin esre":"tk","Tenvin ötre":"td","Üstün + elif":"ma","Esre + ye":"my","Ötre + vav":"mv"};
+function paintK(g,c,id){
+  if(!kzRedOn(c,id))return g;
+  if(g.startsWith("أ"+FA))return "أ"+FA+`<span class="kln">${g.slice(2)}</span>`;
+  return `<span class="kln">${g}</span>`;
+}
+function htable(rows,c){
   return `<div class="htab">${rows.map(r=>r[0]==="sep"?`<div class="hsep">${r[1]}</div>`:
-    `<div class="hrow"><span class="ar">${r[0]}</span><div><div class="hn">${r[1]}</div><div class="hd">${r[2]}</div></div><span class="rd">${r[3]}</span></div>`).join("")}</div>`;
+    `<div class="hrow"><span class="ar">${c&&CASE_KR[r[1]]?paintK(r[0],c,CASE_KR[r[1]]):r[0]}</span><div><div class="hn">${r[1]}</div><div class="hd">${r[2]}</div></div><span class="rd">${r[3]}</span></div>`).join("")}</div>`;
 }
 function openLetter(c){
   const x=byChar[c],i=order.indexOf(c);
@@ -598,9 +606,9 @@ function openLetter(c){
   const sp=special(c);
   const P=document.getElementById("panel");
   P.innerHTML=`
-   <div class="ptop"><div class="big ar">${c}</div><div><h2>${x[1]}</h2><p>Ses: <b>${x[2]}</b>${isThick(c)?" · kalın":c==="ر"?" · üstün ve ötrede kalın":""}</p>${sib.length?`<p>Benzeri: <span class="ar" style="font-size:1.6rem">${sib.join("  ")}</span></p>`:""}</div></div>
+   <div class="ptop"><div class="big ar ${KALIN.includes(c)?"kln":""}">${c}</div><div><h2>${x[1]}</h2><p>Ses: <b>${x[2]}</b>${isThick(c)?" · kalın":c==="ر"?" · üstün ve ötrede kalın":""}</p>${sib.length?`<p>Benzeri: <span class="ar" style="font-size:1.6rem">${sib.join("  ")}</span></p>`:""}</div></div>
    <div class="note">${x[4]}</div>
-   <div><p class="lbl">Hareke gelince nasıl okunur?</p>${htable(cases(c))}</div>
+   <div><p class="lbl">Hareke gelince nasıl okunur?</p>${htable(cases(c),c)}${KALIN.includes(c)||c==="ر"?`<p class="klg" style="text-align:left;margin:6px 2px 0">${c==="ر"?"Kırmızı satırlarda Ra kalın okunur; esrede incedir.":"Kırmızı: kalın harf (a · ı · u)."}</p>`:""}</div>
    ${sp.length?`<div><p class="lbl">Bu harfe özel kurallar</p><ul class="rules">${sp.map(s=>`<li>${s.replace(/[\u0600-\u06FF]+/g,m=>`<span class="ar" style="font-size:1.3rem">${m}</span>`)}</li>`).join("")}</ul></div>`:""}
    <div><p class="lbl">Kelime içindeki şekilleri (sağdan sola)</p><div class="forms">${form4(c).map(f=>`<div><span class="ar">${f[0]}</span><small>${f[1]}</small></div>`).join("")}</div></div>
    <div class="btns">
