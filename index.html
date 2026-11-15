@@ -690,23 +690,25 @@ const SIGNS=[["a","Üstün"],["i","Esre"],["u","Ötre"],["c","Cezm"],["s","Şedd
 function signGlyph(c,s){if(c==="ا")return glyph(c,s);return {a:c+FA,i:c+KE,u:c+DA,c:c+SU,s:c+SH,tf:c+TF,tk:c+TK,td:c+TD}[s]}
 function makeQ(c){
   if(mode==="harf"){const opts=shuffle([c,...nearLetters(c).slice(0,2),...shuffle(L.map(x=>x[0]).filter(o=>o!==c&&!groupOf(c).includes(o)))].slice(0,4));
-    return {ask:"Bu harf nedir?",show:c,big:1,ans:c,opts:opts.map(o=>[o,byChar[o][1]]),fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,key:c}}
+    return {ask:"Bu harf nedir?",show:c,big:1,ans:c,opts:opts.map(o=>[o,byChar[o][1]]),fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,key:c,why:v=>exLetter(c,v)}}
   if(mode==="ters"){const opts=shuffle([c,...nearLetters(c).slice(0,2),...shuffle(L.map(x=>x[0]).filter(o=>o!==c&&!groupOf(c).includes(o)))].slice(0,4));
-    return {ask:"Hangisi bu harf?",name:byChar[c][1],ans:c,glyphs:1,opts:opts.map(o=>[o,o]),fbOk:`${byChar[c][1]} = ${c}`,key:c}}
+    return {ask:"Hangisi bu harf?",name:byChar[c][1],ans:c,glyphs:1,opts:opts.map(o=>[o,o]),fbOk:`${byChar[c][1]} = ${c}`,key:c,why:v=>exLetter(c,v)}}
   if(mode==="hece"){
     const h="aiu"[Math.random()*3|0];const ans=read(c,h);
     const same=shuffle("aiu".split("").filter(o=>o!==h).map(o=>read(c,o)));
     const other=[];nearLetters(c).forEach(o=>{const r=read(o,h);if(okD(c,r,ans)&&!same.includes(r)&&!other.includes(r))other.push(r)});
     const opts=shuffle([ans,same[0],...other.slice(0,2)]);
     const g=glyph(c,h);
-    return {ask:"Bu nasıl okunur?",show:g,big:1,ans,opts:opts.map(o=>[o,o]),fbOk:`${g} = ${ans} (${byChar[c][1]} ${({a:"üstün",i:"esre",u:"ötre"})[h]})`,key:g,ansLabel:ans};
+    return {ask:"Bu nasıl okunur?",show:g,big:1,ans,opts:opts.map(o=>[o,o]),fbOk:`${g} = ${ans} (${byChar[c][1]} ${({a:"üstün",i:"esre",u:"ötre"})[h]})`,key:g,ansLabel:ans,why:v=>exHareke(c,h,v)};
   }
   // isaret
   const pickFrom=c==="ا"?SIGNS.slice(0,3):SIGNS;
   const s=pickFrom[Math.random()*pickFrom.length|0];
   const others=shuffle(SIGNS.filter(o=>o[0]!==s[0])).slice(0,3);
   const g=signGlyph(c,s[0]);
-  return {ask:"Bu harfin işareti hangisi?",show:g,big:1,ans:s[0],opts:shuffle([s,...others]),fbOk:`${s[1]}`,key:g,ansLabel:s[1]};
+  const S2KR={a:"u",i:"e",u:"o",c:"c",s:"s",tf:"tf",tk:"tk",td:"td"};
+  return {ask:"Bu harfin işareti hangisi?",show:g,big:1,ans:s[0],opts:shuffle([s,...others]),fbOk:`${s[1]}`,key:g,ansLabel:s[1],
+    why:v=>{const R=KRby[S2KR[s[0]]],W=KRby[S2KR[v]];return exBox(`<div><b>${R.ad}:</b> ${R.acik}</div>${W&&W!==R?`<div class="fke">Seçtiğin <b>${W.ad}</b>: ${W.acik}</div>`:""}`)}};
 }
 function nextQ(){
   const Q=document.getElementById("quiz");
@@ -735,8 +737,9 @@ function answer(b,v){
   const right=Q.querySelector(`.opts button[data-v="${CSS.escape(Z.ans)}"]`).textContent;
   if(v===Z.ans){q.score++;buzz(25);fb.style.color="var(--good)";fb.innerHTML=`✓ Doğru!<small>${Z.fbOk}</small>`}
   else{b.classList.add("no");buzz([60,60,60]);q.missed.push(Z.key);fb.style.color="var(--bad)";
-    fb.innerHTML=`✗ Yanlış. Doğrusu: <span class="${Z.glyphs?"ar":""}" style="${Z.glyphs?"font-size:1.6rem":""}">${right}</span><small>${Z.fbOk}</small>`}
-  q.n++;setTimeout(nextQ,v===Z.ans?1100:2400);
+    fb.innerHTML=`✗ Yanlış. Doğrusu: <span class="${Z.glyphs?"ar":""}" style="${Z.glyphs?"font-size:1.6rem":""}">${right}</span>${Z.why?Z.why(v):`<small>${Z.fbOk}</small>`}<button class="btn pri" id="qNext" style="width:100%;margin-top:8px">Devam et ›</button>`;
+    q.n++;fb.querySelector("#qNext").onclick=nextQ;return} // yanlışta açıklamayı okusun diye bekler
+  q.n++;setTimeout(nextQ,1100);
 }
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;
   document.querySelectorAll("[data-mode]").forEach(o=>o.classList.toggle("sel",o===b));newRound()});
@@ -2124,6 +2127,59 @@ function yzFinish(box){
 }
 
 
+// ----- Testte yanlışta açıklama (doğrusunu tarif eder, seçilenin neden yanlış olduğunu söyler) -----
+const exBox=h=>`<div class="fkx">${h}</div>`,exAr=t=>`<span class="ar">${t}</span>`;
+const HNL={a:"üstünlü",i:"esreli",u:"ötreli"},H2KR={a:"u",i:"e",u:"o"};
+function inceKalin(c,h){ // harfin ince/kalın okunuşu (Ha, Ayn, Ra özel)
+  const n=byChar[c][1];
+  if(c==="ا")return "Harekeli elif hemzedir: أَ <b>e</b>, إِ <b>i</b>, أُ <b>ü</b>.";
+  if(KALIN.includes(c))return `<b>${n}</b> kalın harftir: üstün <b>a</b>, esre <b>ı</b>, ötre <b>u</b> okunur.`;
+  const hn=harfNot(c,h);if(hn)return hn;
+  return `<b>${n}</b> ince harftir: üstün <b>e</b>, esre <b>i</b>, ötre <b>ü</b> okunur.`;
+}
+function exLetter(c,v){return byChar[v]&&v!==c?farkHTML(c,v):exBox(`<b>${byChar[c][1]}</b> ${exAr(c)}: ${FARK[c]}`)}
+function exPos(c,v,pos){
+  const f=posForm(c,pos);
+  const cmp=byChar[v]&&v!==c?`<div class="fam">${[c,v].map(o=>`<div class="${o===c?"me":""}"><span class="ar">${posForm(o,pos)}</span><b>${byChar[o][1]}</b><small>${o===c?"doğrusu":"seçtiğin"}</small></div>`).join("")}</div>`:"";
+  const notes=shapeNotes(c);
+  return cmp+exBox(`<div class="fkh"><b>${byChar[c][1]}</b> ${YPOSL[pos]} ${exAr(f)} yazılır. 4 yazılışı (sağdan sola): ${form4(c).map(x=>exAr(x[0])).join(" ")}</div>${notes.length?`<div class="fke">${notes.join("<br>")}</div>`:""}`);
+}
+function exHareke(c,h,v){
+  const R=KRby[H2KR[h]],g=glyph(c,h),ans=read(c,h);let why="";
+  if(v&&v!==ans){
+    const x="aiu".split("").find(x=>read(c,x)===v);
+    const o=x?null:[...nearLetters(c),...LET].find(o=>o!==c&&read(o,h)===v);
+    why=x?`Seçtiğin <b>${esc(v)}</b>, bu harfin ${HNL[x]} okunuşu: ${exAr(glyph(c,x))}. Bu harfte ${R.ad.toLowerCase()} var.`
+      :o?`Seçtiğin <b>${esc(v)}</b>, başka bir harfin okunuşu: ${exAr(glyph(o,h))} (${byChar[o][1]}).`
+      :vfold(v)===vfold(ans)?`Seçtiğin <b>${esc(v)}</b>: ince ve kalın okunuş karışmış.`:"";
+  }
+  return exBox(`<div class="fkh">${exAr(g)} = <b>${ans}</b></div><div><b>${R.ad}:</b> ${R.acik}</div><div>${inceKalin(c,h)}</div>${why?`<div class="fke">${why}</div>`:""}`);
+}
+function exKR(R,c,v){
+  const g=R.g(c),rd=R.r(c);let why="";
+  if(v&&v!==rd){
+    const o=KR.find(o=>o!==R&&(o.all||c!=="ا")&&o.r(c)===v);
+    why=o?`Seçtiğin <b>${esc(v)}</b>, ${exAr(o.g(c))} (${o.ad}) okunuşu.`:vfold(v)===vfold(rd)?`Seçtiğin <b>${esc(v)}</b>: ince ve kalın okunuş karışmış.`:"";
+  }
+  const hn=KALIN.includes(c)?`<b>${byChar[c][1]}</b> kalın harftir.`:harfNot(c,KR_H[R.id]);
+  return exBox(`<div class="fkh">${exAr(g)} = <b>${rd}</b></div><div><b>${R.ad}:</b> ${R.acik}</div>${hn?`<div>${hn}</div>`:""}${why?`<div class="fke">${why}</div>`:""}`);
+}
+const KIND_IP={kelime:"Her harekeli harf bir hecedir; sağdan başlayıp hece hece oku.",cezm:"Cezmli harf sesli harf almaz, önceki heceye eklenir.",
+  sedde:"Şeddeli harf iki kez okunur: biri önceki heceye eklenir, biri kendi harekesiyle okunur.",tenvin:"Tenvin sona n ekler; tenvin üstünden sonraki elif okunmaz.",
+  uzatma:"Elif, vav, ye harekesiz gelince önceki sesi uzatır: â, î, û.",karisik:"Önce işaretlere bak (hareke, cezm, şedde, tenvin, uzatma), sonra hece hece oku."};
+function exWord(w,kind,v){
+  const S=syllables(w),R=S.map(x=>x.r),P=(v||"").split("-");
+  const diff=v&&P.length===R.length?R.map((r,i)=>r!==P[i]?`${exAr(S[i].a)} = <b>${r}</b> (seçtiğinde: ${esc(P[i])})`:"").filter(Boolean):[];
+  return `<div class="chunks">${S.map(x=>`<span><b class="ar">${x.a}</b><small>${x.r}</small></span>`).join("")}</div>`
+    +exBox(`<div class="fkh">Hece hece: <b>${R.join("-")}</b></div>${KIND_IP[kind]?`<div>${KIND_IP[kind]}</div>`:""}${diff.length?`<div class="fke">Karışan hece: ${diff.join(" · ")}</div>`:""}`);
+}
+function exAyet(s,i,v){
+  const a=s.v[i];let o=null;
+  if(v&&v!==a[1])for(const n of KISA_S){const t=sureBy(n);if(!t.v)continue;const j=t.v.findIndex(b=>b[1]===v);if(j>=0){o={t,j};break}}
+  return exBox(`<div class="fkh">${s.ad} ${i+1}. ayet: <b>${esc(a[1])}</b></div><div class="fke">Meali: ${esc(a[2])}</div>`
+    +(o?`<div style="margin-top:6px">Seçtiğin okunuş <b>${o.t.ad} ${o.j+1}.</b> ayete ait:</div><div class="qay ar" style="font-size:1.4rem;line-height:2">${o.t.v[o.j][0]}</div>`:""));
+}
+
 // ===== AŞAMALI TEST (harften ayete, git gide zorlaşır) =====
 // Her aşama 10 soru. Sonraki aşama ancak 10'da 10 ile açılır. 4 ya da daha çok yanlışta bir aşama aşağı inmek tavsiye edilir.
 // İçerik: harf/okunuş kuralları (denetlenmiş read/KR), derslerdeki doğrulanmış kelimeler, ayet okunuşları kaynaktan (üretilmez).
@@ -2136,26 +2192,26 @@ function krQ(R,c){ // kural + harf → "nasıl okunur?"
   const cands=[swapFirstV(rd),...famOrder(R).filter(o=>o.all||c!=="ا").map(o=>o.r(c))];
   const opts=fillOpts(rd,cands,[],4,x=>okD(c,x,rd,R.id));
   const hn=harfNot(c,KR_H[R.id]);
-  return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans:rd,opts:shuffle(opts).map(o=>[o,o]),key:g,
+  return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans:rd,opts:shuffle(opts).map(o=>[o,o]),key:g,why:v=>exKR(R,c,v),
     fbOk:`<span class="ar" style="font-size:1.4rem">${g}</span> = <b>${rd}</b> · ${R.ad}${hn?" · "+hn.replace(/<[^>]+>/g,""):""}`,miss:`<span class="ar">${g}</span> ${rd}`};
 }
 const KISA_S=[1,...Array.from({length:37},(_,i)=>78+i)];
 const AS=[
  {ad:"Harfi tanı",d:"Harfi gör, adını seç",ex:"ب → Be",
   gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const o=fillOpts(c,nearLetters(c).slice(0,2),ALLC,4);
-    return {ask:"Bu harf nedir?",html:`<div class="qglyph ar">${c}</div>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:c,fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,miss:`<span class="ar">${c}</span> ${byChar[c][1]}`}})},
+    return {ask:"Bu harf nedir?",html:`<div class="qglyph ar">${c}</div>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:c,why:v=>exLetter(c,v),fbOk:`${c} = ${byChar[c][1]} (${byChar[c][2]})`,miss:`<span class="ar">${c}</span> ${byChar[c][1]}`}})},
  {ad:"Harfi bul",d:"Adını gör, benzer harfler arasından bul",ex:"Sad → ص",
   gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const near=[...groupOf(c),...(TEETH.includes(c)?TEETH.split(""):[]),...("فق".includes(c)?["ف","ق"]:[]),...(c==="ل"?["ا","ك"]:[]),...(c==="ا"?["ل"]:[])].filter(o=>o!==c);
     const o=fillOpts(c,shuffle([...new Set(near)]),ALLC,4);
-    return {ask:"Hangisi bu harf?",html:`<div class="qname">${byChar[c][1]}</div>`,ans:c,glyphs:1,opts:shuffle(o).map(x=>[x,x]),key:c,fbOk:`${byChar[c][1]} = <span class="ar" style="font-size:1.4rem">${c}</span> · ${FARK[c]}`,miss:`${byChar[c][1]} <span class="ar">${c}</span>`}})},
+    return {ask:"Hangisi bu harf?",html:`<div class="qname">${byChar[c][1]}</div>`,ans:c,glyphs:1,opts:shuffle(o).map(x=>[x,x]),key:c,why:v=>exLetter(c,v),fbOk:`${byChar[c][1]} = <span class="ar" style="font-size:1.4rem">${c}</span> · ${FARK[c]}`,miss:`${byChar[c][1]} <span class="ar">${c}</span>`}})},
  {ad:"Kelimedeki şekiller",d:"Başta, ortada, sonda yazılışı tanı",ex:"ـبـ → Be",
   gen:()=>pickDistinct(ALLC,AS_N).map(c=>{const pos=YPOS[Math.random()*3|0],f=posForm(c,pos);const o=fillOpts(c,shuffle(yNear(c,pos)),ALLC,4);
-    return {ask:"Bu şekil hangi harf?",html:`<div class="qglyph ar">${f}</div><p class="qpos">${YPOSL[pos]}</p>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:f,fbOk:`<span class="ar" style="font-size:1.4rem">${f}</span> = ${byChar[c][1]}, ${pos} yazılışı`,miss:`<span class="ar">${f}</span> ${byChar[c][1]}`}})},
+    return {ask:"Bu şekil hangi harf?",html:`<div class="qglyph ar">${f}</div><p class="qpos">${YPOSL[pos]}</p>`,ans:c,opts:shuffle(o).map(x=>[x,byChar[x][1]]),key:f,why:v=>exPos(c,v,pos),fbOk:`<span class="ar" style="font-size:1.4rem">${f}</span> = ${byChar[c][1]}, ${pos} yazılışı`,miss:`<span class="ar">${f}</span> ${byChar[c][1]}`}})},
  {ad:"Üstün, esre, ötre",d:"Harekeli harfi oku",ex:"صِ → sı",
   gen:()=>pickDistinct(LET,AS_N).map(c=>{const h="aiu"[Math.random()*3|0],g=glyph(c,h),ans=read(c,h);
     const cands=[...shuffle("aiu".split("").filter(x=>x!==h)).map(x=>read(c,x)),ans.replace(/[eaiıüu]$/,m=>SWAP[m]),...nearLetters(c).map(o=>read(o,h))];
     const o=fillOpts(ans,cands,[],4,x=>okD(c,x,ans));const hn=harfNot(c,h);
-    return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans,opts:shuffle(o).map(x=>[x,x]),key:g,fbOk:`<span class="ar" style="font-size:1.4rem">${g}</span> = <b>${ans}</b> (${byChar[c][1]} ${HN[h]})${hn?" · "+hn.replace(/<[^>]+>/g,""):""}`,miss:`<span class="ar">${g}</span> ${ans}`}})},
+    return {ask:"Bu nasıl okunur?",html:`<div class="qglyph ar">${g}</div>`,ans,opts:shuffle(o).map(x=>[x,x]),key:g,why:v=>exHareke(c,h,v),fbOk:`<span class="ar" style="font-size:1.4rem">${g}</span> = <b>${ans}</b> (${byChar[c][1]} ${HN[h]})${hn?" · "+hn.replace(/<[^>]+>/g,""):""}`,miss:`<span class="ar">${g}</span> ${ans}`}})},
  {ad:"Cezm ve şedde",d:"Harekesiz ve iki kez okunan harfler",ex:"أَقْ → ak",
   gen:()=>pickDistinct(LETN,AS_N).map((c,i)=>krQ(KRby[i%2?"s":"c"],c))},
  {ad:"Tenvin ve uzatma",d:"Sona n ekleyen ve sesi uzatan işaretler",ex:"بًا → ben",
@@ -2165,7 +2221,7 @@ const AS=[
  {ad:"Kelimeler",d:"Derslerdeki kelimeleri hece hece oku",ex:"كَتَبَ → ke-te-be",
   gen:()=>{const W=[];RL.forEach(l=>(l.words||[]).forEach(([w,m])=>W.push([w,m,l.kind])));
     return pickDistinct(W,AS_N).map(([w,m,kind])=>{const ans=readWord(w);
-      return {ask:"Bu kelime nasıl okunur?",html:`<div class="qglyph ar" style="font-size:4.4rem">${w}</div>`,ans,opts:readingOptions(w,kind).map(x=>[x,x]),key:w,optClass:"kwide",fbOk:`<span class="ar" style="font-size:1.4rem">${w}</span> = <b>${ans}</b> · ${m}`,miss:`<span class="ar">${w}</span> ${ans}`}})}},
+      return {ask:"Bu kelime nasıl okunur?",html:`<div class="qglyph ar" style="font-size:4.4rem">${w}</div>`,ans,opts:readingOptions(w,kind).map(x=>[x,x]),key:w,optClass:"kwide",why:v=>exWord(w,kind,v),fbOk:`<span class="ar" style="font-size:1.4rem">${w}</span> = <b>${ans}</b> · ${m}`,miss:`<span class="ar">${w}</span> ${ans}`}})}},
  {ad:"Kısa ayetler",d:"Fâtiha ve Amme cüzünden ayetin okunuşunu bul",ex:"قُلْ هُوَ اللَّهُ أَحَدٌ → Kul huvallâhu ehad",need:KISA_S,
   gen:()=>{const A=[];
     for(const n of KISA_S){const s=sureBy(n);if(!s.v)continue;s.v.forEach((a,i)=>{const w=a[0].split(/\s+/).filter(isW).length;if(w<=8)A.push({s,i,a})})}
@@ -2174,7 +2230,7 @@ const AS=[
       const same=s.v.map((b,j)=>[b[1],j]).filter(([t,j])=>j!==i).sort((x,y)=>Math.abs(x[0].length-L)-Math.abs(y[0].length-L)).map(x=>x[0]);
       const other=A.filter(x=>x.s!==s).map(x=>x.a[1]);
       const o=fillOpts(ans,same.slice(0,6),other,4,x=>norm(x)!==norm(ans));
-      return {ask:"Bu ayet nasıl okunur?",html:`<div class="qay ar">${a[0]}</div><p class="qpos">${s.ad} Suresi, ${i+1}. ayet</p>`,ans,opts:shuffle(o).map(x=>[x,x]),key:s.n+":"+(i+1),optClass:"ayk",
+      return {ask:"Bu ayet nasıl okunur?",html:`<div class="qay ar">${a[0]}</div><p class="qpos">${s.ad} Suresi, ${i+1}. ayet</p>`,ans,opts:shuffle(o).map(x=>[x,x]),key:s.n+":"+(i+1),optClass:"ayk",why:v=>exAyet(s,i,v),
         fbOk:`${s.ad} ${i+1}: <b>${esc(ans)}</b><br>Meali: ${esc(a[2])}`,miss:`${s.ad} ${i+1}. ayet`}})}},
 ];
 let asP={open:1,best:{},pass:{}},asView="list",asRun=null;
@@ -2229,7 +2285,8 @@ function asShow(box){
     if(ok){R.score++;buzz(25);fb.style.color="var(--good)";fb.innerHTML=`✓ Doğru!<small>${Z.fbOk}</small>`;
       setTimeout(()=>{if(asRun===R&&asView==="run"&&R.answered){R.i++;asShow(box)}},Z.optClass==="ayk"?1800:1000)}
     else{b.classList.add("no");buzz([60,60,60]);R.missed.push(Z);fb.style.color="var(--bad)";
-      fb.innerHTML=`✗ Yanlış.<small>${Z.fbOk}</small>`;
+      const right=(Z.opts.find(o=>o[0]===Z.ans)||[,Z.ans])[1];
+      fb.innerHTML=`✗ Yanlış. Doğrusu: <span class="${Z.glyphs?"ar":""}" style="${Z.glyphs?"font-size:1.6rem":""}">${esc(right)}</span>${Z.why?Z.why(v):`<small>${Z.fbOk}</small>`}`;
       const nb=box.querySelector("#asNext");nb.hidden=false;try{nb.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}}
   });
 }
